@@ -9,6 +9,7 @@ on:
 jobs:
   full_ci:
     strategy:
+      fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-latest, windows-latest ]
         toolchain: [ stable, 1.67.1 ]
