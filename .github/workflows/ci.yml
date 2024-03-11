@@ -51,6 +51,7 @@ jobs:
       - name: Test
         run: |
           cargo test --no-fail-fast -- --nocapture
+        if: ${{ matrix.type != '1.67.1' }} # dev dependencies require at least 1.74.0
 
       - name: Test all features nightly
         run:
