@@ -1,0 +1,49 @@
+name: Build and test
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 0 * * 1'
+
+jobs:
+  full_ci:
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        toolchain: [ stable, 1.67.1 ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup rust version
+        run: rustup default ${{ matrix.toolchain }}
+
+      - name: Clippy fmt
+        run: |
+          cargo fmt -- --check
+        if: ${{ matrix.type == 'stable' }}
+
+      - name: Cargo check
+        run: |
+          cargo check
+          cargo check --all-features
+
+      - name: Cargo check examples
+        run: |
+          cargo check --examples
+          cargo check --examples --all-features
+
+      - name: Clippy
+        run: |
+          cargo clippy
+        if: ${{ matrix.type == 'stable' }}
+
+      - name: Test
+        run: |
+          cargo test --no-fail-fast -- --nocapture
+          cargo test --all-features --no-fail-fast -- --nocapture
+
+      - name: Doc
+        run: |
+          cargo doc
