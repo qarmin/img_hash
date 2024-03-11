@@ -23,7 +23,7 @@ jobs:
       - name: Clippy fmt
         run: |
           cargo fmt -- --check
-        if: ${{ matrix.type == 'stable' }}
+        if: ${{ matrix.toolchain == 'stable' }}
 
       - name: Cargo check
         run: |
@@ -32,7 +32,7 @@ jobs:
       - name: Cargo check all features
         run: |
           cargo check --all-features
-        if: ${{ matrix.type == 'nightly' }}
+        if: ${{ matrix.toolchain == 'nightly' }}
 
       - name: Cargo check examples
         run: |
@@ -41,22 +41,22 @@ jobs:
       - name: Cargo check examples all features
         run: |
           cargo check --examples --all-features
-        if: ${{ matrix.type == 'nightly' }}
+        if: ${{ matrix.toolchain == 'nightly' }}
 
       - name: Clippy
         run: |
           cargo clippy
-        if: ${{ matrix.type == 'stable' }}
+        if: ${{ matrix.toolchain == 'stable' }}
 
       - name: Test
         run: |
           cargo test --no-fail-fast -- --nocapture
-        if: ${{ matrix.type != '1.67.1' }} # dev dependencies require at least 1.74.0
+        if: ${{ matrix.toolchain != '1.67.1' }}  # dev dependencies require at least 1.74.0
 
       - name: Test all features nightly
         run:
           cargo test --all-features --no-fail-fast -- --nocapture
-        if: ${{ matrix.type == 'nightly' }}
+        if: ${{ matrix.toolchain == 'nightly' }}
 
       - name: Doc
         run: |
