@@ -15,7 +15,7 @@ jobs:
         toolchain: [ nightly, stable, 1.67.1 ]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup rust version
         run: rustup default ${{ matrix.toolchain }}
