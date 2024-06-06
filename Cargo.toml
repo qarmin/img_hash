@@ -10,7 +10,7 @@ authors = ["Rafał Mikrut <mikrutrafal@protonmail.com>", "Austin Bonander <austi
 description = "A simple library that provides perceptual hashing and difference calculation for images."
 documentation = "http://docs.rs/image_hasher"
 keywords = ["image", "hash", "perceptual", "difference"]
-repository = "http://github.com/qarmin/img_hash"
+repository = "https://github.com/qarmin/img_hash"
 readme = "README.md"
 
 [features]
