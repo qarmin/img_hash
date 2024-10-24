@@ -214,7 +214,7 @@ fn median_u8(numbers: &[u8]) -> u8 {
     if sorted.len() % 2 == 0 {
         let a = sorted[mid - 1];
         let b = sorted[mid];
-        (a + b) / 2
+        ((a as u16 + b as u16) / 2) as u8
     } else {
         sorted[mid]
     }
