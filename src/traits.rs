@@ -249,7 +249,7 @@ where
 {
     fn diff_inplace(&mut self, other: &Self) {
         self.iter_mut().zip(other.iter()).for_each(|(l, r)| {
-            *l = l.wrapping_sub(*r);
+            *l = 255 - r.saturating_sub(*l);
         });
     }
 }
