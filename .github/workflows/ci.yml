@@ -49,7 +49,7 @@ jobs:
       - if: matrix.toolchain == '1.67.1'
         run: |
           # Image-rs 0.25.4 is the last version that supports 1.67.1
-          cargo update -p image@0.25.0 --precise 0.25.4
+          cargo update -p image@0.25 --precise 0.25.4
           
           cargo check
           cargo check --examples
