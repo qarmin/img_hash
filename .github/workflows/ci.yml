@@ -23,12 +23,12 @@ jobs:
       - if: matrix.toolchain == 'nightly'
         run: |          
           cargo check
-          cargo check --feature "nightly"
+          cargo check --features "nightly"
           
           cargo check --examples
-          cargo check --examples --feature "nightly"
+          cargo check --examples --features "nightly"
           
-          cargo test --feature "nightly" --no-fail-fast -- --nocapture
+          cargo test --features "nightly" --no-fail-fast -- --nocapture
           
           cargo doc
 
