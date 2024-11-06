@@ -1,6 +1,6 @@
 # 3.0.0 - ?.?.?
 - Fix difference of gaussians prefilter - [#21](https://github.com/qarmin/img_hash/pull/21)
-- Fixed overflow in median hash
+- Fixed u8 overflow in median hash
 
 # 2.0.0 - 11.03.2024
 - Update to image 0.25

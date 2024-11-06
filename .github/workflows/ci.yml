@@ -20,44 +20,38 @@ jobs:
       - name: Setup rust version
         run: rustup default ${{ matrix.toolchain }}
 
-      - name: Clippy fmt
+      - if: matrix.toolchain == 'nightly'
+        run: |          
+          cargo check
+          cargo check --features "nightly"
+          
+          cargo check --examples
+          cargo check --examples --features "nightly"
+          
+          cargo test --features "nightly" --no-fail-fast -- --nocapture
+          
+          cargo doc
+
+      - if: matrix.toolchain == 'stable'
         run: |
           cargo fmt -- --check
-        if: ${{ matrix.toolchain == 'stable' }}
-
-      - name: Cargo check
-        run: |
+          
           cargo check
-
-      - name: Cargo check all features
-        run: |
-          cargo check --all-features
-        if: ${{ matrix.toolchain == 'nightly' }}
-
-      - name: Cargo check examples
-        run: |
           cargo check --examples
-
-      - name: Cargo check examples all features
-        run: |
-          cargo check --examples --all-features
-        if: ${{ matrix.toolchain == 'nightly' }}
-
-      - name: Clippy
-        run: |
+          
           cargo clippy
-        if: ${{ matrix.toolchain == 'stable' }}
-
-      - name: Test
-        run: |
+          
           cargo test --no-fail-fast -- --nocapture
-        if: ${{ matrix.toolchain != '1.67.1' }}  # dev dependencies require at least 1.74.0
+          
+          cargo doc
 
-      - name: Test all features nightly
-        run:
-          cargo test --all-features --no-fail-fast -- --nocapture
-        if: ${{ matrix.toolchain == 'nightly' }}
-
-      - name: Doc
+      # Cannot run tests on 1.67.1, because dev dependencies require at least 1.74.0
+      - if: matrix.toolchain == '1.67.1'
         run: |
+          # Image-rs 0.25.4 is the last version that supports 1.67.1
+          cargo update -p image --precise 0.25.4
+          
+          cargo check
+          cargo check --examples
+          
           cargo doc

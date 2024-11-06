@@ -29,15 +29,12 @@ use std::borrow::Cow;
 use std::fmt;
 use std::marker::PhantomData;
 
+pub use alg::{BitOrder, HashAlg};
 use base64::Engine;
-use image::imageops;
-pub use image::imageops::FilterType;
-use image::GrayImage;
-use serde::{Deserialize, Serialize};
-
-pub use alg::BitOrder;
-pub use alg::HashAlg;
 use dct::DctCtxt;
+pub use image::imageops::FilterType;
+use image::{imageops, GrayImage};
+use serde::{Deserialize, Serialize};
 pub(crate) use traits::BitSet;
 pub use traits::{DiffImage, HashBytes, Image};
 
@@ -556,8 +553,8 @@ fn debug_filter_type(ft: &FilterType) -> &'static str {
 #[cfg(test)]
 mod test {
     use image::{ImageBuffer, Rgba};
-
-    use rand::{rngs::SmallRng, RngCore, SeedableRng};
+    use rand::rngs::SmallRng;
+    use rand::{RngCore, SeedableRng};
 
     use super::{HashAlg, HasherConfig, ImageHash};
 
@@ -655,5 +652,70 @@ mod test {
         let decoded_result = ImageHash::from_base64(&*base64_string);
 
         assert_eq!(decoded_result.unwrap(), hash1);
+    }
+
+    #[test]
+    fn test_hash_stability() {
+        let image_buffer = gen_test_img(256, 256);
+
+        let mut expected_hashes: Vec<(HashAlg, u32, String, String)> = vec![];
+        let data = &[
+            (HashAlg::Blockhash, 8, "3M0FbCH1SXo"),
+            (HashAlg::Blockhash, 16, "Rmtwt5NMuVGZAHNooZz9P9IYk8R/t5BcqAnrPgTZ9pY"),
+            (HashAlg::Blockhash, 32, "+JhF7rcRfDgFvjlWJBsrVxfiaTYPDVOQ509GlqOFS7dL0gFG+1tsEIc2YaxOjy2/UU7QWqXdmZaTiZ0GUt37CqRmUrOM8spCTlc2pHfVukj+Dy1JzuedykxTZBgEh/si2OhlgqulS0TKOvRP6twsFxJrVwUVaMD+gh2+J3zecM4"),
+            (HashAlg::Blockhash, 64, "VVTBXKcKnFdaqibDc/X7xH8HZs/3W0SDJE0DI1BZyJ0zz7Xv4kg9sych6keNnokFcJyBuN+Xb4qkCs9lUYwcM7ZOh9SqOCkNj5GseqYmPL0dcOIyBD5Tz9+Fu4pXpoSVemr8PRp1r5dh2F/iaIC8CaeQE5hNAiKbSc8u5RNxPc+Pog2vrMRdczJ51nKRoJ7ajk3OV7IMBAl/9kZoT/UCYnHSFIsBNFKYJ0BeK1va9Fr/uLda0Dx3y+wXxUhpid0lSSZWsnC7fDvtG/g8DpOUwTaA42DDmyzBJ93129GgOsOPRaKodH9+kFlTbYqHgkEJRgFS387Wtphss/biT5/oFbCFZhwJF2tcPOx+mER0KZP2yRlHJfNMLBHiT/6s9G+i5yVdIjpPYk7oeJdmrOVwbjorItHOLWR5d6UTc4DGmpK8rLVB4phTkIen5wS9hWMm1XCxbOHJivCc0bt8Y6WuppjayHqU5tmHqjIXGxIfWlc1CS+wr+21SViRt8DtcQxaNGWcqmFtBuLFesLap2jOwe3qrqQnZCRheagz2YV0On5KgtUONP53YHz0XFUE430ZpATg4tE2IUPZ6lHX3mq/jYxWVZt+fjdADoduNDwboxKwy8Catfj0NhsnBDxK00fvBIX0UZT6WQxN54dK5Mc3baIuR3MkFn7asDvUx+M6nVA"),
+            (HashAlg::Gradient, 8, "VCpSJptCLTU"),
+            (HashAlg::Gradient, 16, "qjWoVkjWzBgmkpgmOJuomE3OjWsaGt12toyknmQYIcM"),
+            (HashAlg::Gradient, 32, "jcwlxolJLwtOWy0bm+y4MagpNTM1k1mRkmBKmlCQUpMtSYRTrQ0t2zaZOCWh5aSEri3XmvrWlNbMtEVpy9marNOR3rVVUnpwZVubtatrTU5LhoxkmhLFmrFBkxui4hooJK1kyFRWaWNxVNTiNm5Gnc01YUFRJ2qtxmpLNpJMViM"),
+            (HashAlg::Gradient, 64, "qutqsiVe2hakxNqpmVLaNG3ZYyaTFXOJi6SFJVpNZpfVIIpVWUndlSBZQ2KlgouUm+VWa9RSqUpYpWGkTIWSnkmR6U5Ltq2lU1qDyLPSEqemnlSzphJL40S2zaJNM7NVlSGPuqxsq0q8yiFpNtWWzFptME20ZrPZMmfHtphSjdYyWaZzJrQYMYxJZZpUzYay5CpjC5m0hG1TWWWmYpQGqRspo6XINlKcELqrlYliO21GRVMsWZaazZZFVSQp4lDNtpkhRTrJJqt2maoNZ6mc7kntTDZtUSr10+U6qTVSs7PQsrWqM1su3GK6c0xzUmFMybCJ0bpsM4yWqxFZoqWs5Epak9koSTPWkxI2a2aroElbZS4ppVJmvVKSKGssW0UztGKKRYxBc0Z3rEpypXUabcpUpXpjeaRNitGpWExrSpLGEq/UWmVRmcVSZJbh9HKTysYWJ3VNrubYSyuXMtWKIEdsJjnZskzlbYiySZpFW5O0dpHO7OKWTLzMytrkTGJD6whv1bAmUus6RXNNli6VUHY3VraiNJcttFtadk4buzIlmWljUiuFVksbZskyoyS9KZIxuVCyseUVtqhabxqByU3Ma2kzGyslUTOzRpLIqroeNWpuyjazuiaTVLZkk1EjklRZmN09SK2TNDJZW1URP0yzmCi2Ww/bGc1qcWStycw"),
+            (HashAlg::Mean, 8, "eQ9N/ff/eOs"),
+            (HashAlg::Mean, 16, "V2fQdN+UuXNcEnMs4bLRu17cG8f/85r96InpPsE7Ls4"),
+            (HashAlg::Mean, 32, "OLlvnDeTfB4dvjl+BLk5I1NzYSdrpnOzp8+ekOOjBx/Y0gjX+ntIAkU/cSwHj609HHqevoWNuZeTOc9LFvO/7awn0PX4hf5Dj7IWvRbPmlD3n7lJtW+ev+5XMP9Nh/8qWfjBgMvtS0bHifDHydwMGRL5R0eGaMD9nQXa5PyZfOY"),
+            (HashAlg::Mean, 64, "VVfVZ+0o+HdImRdPs9fyZZ4Xx2x+P0YTdk8PY9BZbLezx3WP8hiYF08C/G+LH581JMiF2sUXO043CM/pmQ0iPJMng9kCKr0FvjQOO+eWPv7NPY0mBT5fjtttuk7ZJibVfk7/dM1Bgs8jsF/ybIEUyDfYZdotBKaTTf4efTF1nZfN8g3O7KA9dTlyyTPFiZ7yiV2KPvAlCGnsvs8MzvkfIHTSVIuPPNSYJ3B2L5N+ckmdgP5K07wziXkTrWjjgMEJSQPummC7fL/NAAQ/TmOczzPQ0GRIwy7BJ4vz0mFUPuOHReMeZ/L8+M/gR5nGwsNJF0cHp75J9vgoVj/yT+/o/bC3J75RU3eeZOx1igzQJ9v0y1lT7fNuIITlS9JI/w8w688QjTgf4kbc6Z9GSsXwTRA57HTm4KFZdwfTsdhjWJK5//+BV8RDsZvv3waHxWemNZ19bOrLjs6xl38+ZYG855zYTXKSpl3P3zM9kwAf+zdpzSeQ3f+9WWORFYDvXUbGFhFQvyFtAIjFmuSbrmi90cnurMSuYRRhL7b//Is2OnReJsPGNv6P9Jf0TINE5n3wUgTj4/Emg4H7eDG13DI/gZgSVut3Mjt8jubn/bbbJiI4aoDYlGD2sB0mmCxAFvNv5QGyEZX5GYj856dS1kMxfLBuE2NgQzja8LvR5+k/n5w"),
+            (HashAlg::Median, 8, "eQ9N/ff/eOs"),
+            (HashAlg::Median, 16, "V2fQdN+UuXNcEnMs4bLRu17cG8f/85r96InpPsE7Ls4"),
+            (HashAlg::Median, 32, "OLlvnDeTfB4dvjl+BLk5I1NzYSdrpnOzp8+ekOOjBx/Y0gjX+ntIAkU/cSwHj609HHqevoWNuZeTOc9LFvO/7awn0PX4hf5Dj7IWvRbPmlD3n7lJtW+ev+5XMP9Nh/8qWfjBgMvtS0bHifDHydwMGRL5R0eGaMD9nQXa5PyZfOY"),
+            (HashAlg::Median, 64, "VVfVZ+0o+HdImRdPs9fyZZ4Xx2x+P0YTdk8PY9BZbLezx3WP8hiYF08C/G+LH581JMiF2sUXO043CM/pmQ0iPJMng9kCKr0FvjQOO+eWPv7NPY0mBT5fjtttuk7ZJibVfk7/dM1Bgs8jsF/ybIEUyDfYZdotBKaTTf4efTF1nZfN8g3O7KA9dTlyyTPFiZ7yiV2KPvAlCGnsvs8MzvkfIHTSVIuPPNSYJ3B2L5N+ckmdgP5K07wziXkTrWjjgMEJSQPummC7fL/NAAQ/TmOczzPQ0GRIwy7BJ4vz0mFUPuOHReMeZ/L8+M/gR5nGwsNJF0cHp75J9vgoVj/yT+/o/bC3J75RU3eeZOx1igzQJ9v0y1lT7fNuIITlS9JI/w8w688QjTgf4kbc6Z9GSsXwTRA57HTm4KFZdwfTsdhjWJK5//+BV8RDsZvv3waHxWemNZ19bOrLjs6xl38+ZYG855zYTXKSpl3P3zM9kwAf+zdpzSeQ3f+9WWORFYDvXUbGFhFQvyFtAIjFmuSbrmi90cnurMSuYRRhL7b//Is2OnReJsPGNv6P9Jf0TINE5n3wUgTj4/Emg4H7eDG13DI/gZgSVut3Mjt8jubn/bbbJiI4aoDYlGD2sB0mmCxAFvNv5QGyEZX5GYj856dS1kMxfLBuE2NgQzja8LvR5+k/n5w"),
+            (HashAlg::DoubleGradient, 8, "EERhBSI"),
+            (HashAlg::DoubleGradient, 16, "VCpCVqqSai21lZsbJimEbSSN"),
+            (HashAlg::DoubleGradient, 32, "qjWoVmzWzGgmmYwmGCqqmEnKTUeIKkwb1Wa0jKSaYA0hw1ZStKGKxs611qS2hkiWq1RDCkRqJaKRrbY0azQ0ZqXk6tQ"),
+            (HashAlg::DoubleGradient, 64, "ncxlxolZLwtOWy0Lm8yYMagtPTM1kVmRknFKmtC00pNl2cJTrQ2t23KdaSekpbSliSXXmqIW25LIlGVDyZ3FKcuZmrVX1mxwRFhaNSdLybRL7s5MSpKMJJISxZqxYZodpuI4qGStZMtRVmljcUTU5jZuBp3NNWFhUyZqrcZqS3aSTFYjaRebIlllThOpygyqmstTSYnpmlF5qViT3JFVrtoyW4dkNTjSrUZ0UrOWNWoypz3TqmlNzdLQMpFOSTIZpcwmilYm2JhaM5VadVziWmktrcy1WZZKFdpK5kWj2pIZKqlTpEwZdN9kWYrLODnSyLZWMnJmdq2ajDapS8Z2cqooSVOemLYl"),
+            (HashAlg::VertGradient, 8, "lJsTJQiMJJw"),
+            (HashAlg::VertGradient, 16, "VlaQwYrGzrWWpDSWSBSjTERKLKORqZIdazQkJqTk6tQ"),
+            (HashAlg::VertGradient, 32, "aTebIhllThKpyizqmklTSYnpGtFcoVmrnNBZpnIyW8MsZzjSqcY0UjK2PWomLQ2VilEmzVpbMpGuTSYZ5cbGiloy3Fh0W4daaW0qzLEpnUoV20JGRYfKhhkiqZK8Xol032RZLss4OZLKlnQScGZWrJqMZqlLzjZyqipJU56YtiU"),
+            (HashAlg::VertGradient, 64, "1DYyEcympk7SLRMm27rcqjapJC2lEj2LW69qXJ0ZxKrirGmy1JScZWwNzebSbM62lM+MOJtmWrrKpCKrpJnXsY2G8qye6pSxisjN5Vatm+eqSVJdySE1amVmImYTV8JksbMJtiWVqNSb0pWVpaG2pi5qCzqLWbcmqTplhhVJprJksuVupVReaNGUNjXsaEp7W9kstag1IqtX3WRKJxWlqolOOaWSpMxZCW8tTGElRxpKGrVMZ5lZ8VpuawaySk+TzV2ZOaq1o1gVs6ptlZpb9ZpGklE5r8XKq+RWmZImiUm4WVPVRi6pElZbWaN0TmXJMpZoVidXTuXtuswkiTFp4XFnGa6maWWViVU1CibZlhUyKWlZMumSE1quTGtaQobOa2UyrNxYWpIrubIsVldTcyaV5Y1mZqasNI1bM+pSSrIzTUXxHKsUm5Oi2snONomqE3EeVJ5ZrKRSSqtlyraYkqtTrklH+s7J0sauSSZKlZQlT5ZrRVGRF3XZdFImSzWbu/JmNilZ26xaIz0ljaPKrNY16SpVQ5LijFjhyuYWmliJ0zzpkCyvVKWklGYRS6VmhfLevpqbqk2dbEtZKCVLxotkMnQ6HXPMKmvVpFma6GpFaVjZGBZKrSIZE3kxVmWtVm3YTMU0mbVV6ZVER6UXpTWNlVM5V6stJVOtQVXVetY"),
+
+        ];
+        for (alg, size, hash) in data.iter() {
+            let current_hash = HasherConfig::new()
+                .hash_alg(*alg)
+                .hash_size(*size, *size)
+                .to_hasher()
+                .hash_image(&image_buffer)
+                .to_base64();
+
+            expected_hashes.push((*alg, *size, hash.to_string(), current_hash));
+        }
+
+        // Helper to regenerate the expected hashes
+        // for (alg, size, expected, current) in expected_hashes.iter() {
+        //     println!("(HashAlg::{alg:?}, {size}, \"{current}\"),");
+        // }
+
+        let diff_hashes: Vec<_> = expected_hashes
+            .into_iter()
+            .filter(|(_, _, expected, current)| expected != current)
+            .collect();
+
+        if !diff_hashes.is_empty() {
+            let diff_number = diff_hashes.len();
+            let mut diff_str = String::new();
+            for (alg, size, expected, current) in diff_hashes {
+                diff_str.push_str(&format!(
+                    "{alg:?} {size}x{size}: expected {expected}, got {current}\n"
+                ));
+            }
+            panic!("{diff_number} hashes did not match:\n{}", diff_str);
+        }
     }
 }

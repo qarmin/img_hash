@@ -2,12 +2,10 @@
 extern crate criterion;
 
 use criterion::{Bencher, BenchmarkId, Criterion, Throughput};
-
-use image_hasher::{HashAlg, HasherConfig, ImageHash};
-
 use image::{ImageBuffer, Rgba};
-
-use rand::{rngs::SmallRng, RngCore, SeedableRng};
+use image_hasher::{HashAlg, HasherConfig, ImageHash};
+use rand::rngs::SmallRng;
+use rand::{RngCore, SeedableRng};
 
 type RgbaBuf = ImageBuffer<Rgba<u8>, Vec<u8>>;
 
