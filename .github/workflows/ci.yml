@@ -21,9 +21,7 @@ jobs:
         run: rustup default ${{ matrix.toolchain }}
 
       - if: matrix.toolchain == 'nightly'
-        run: |
-          cargo fmt -- --check
-          
+        run: |          
           cargo check
           cargo check --feature "nightly"
           
@@ -35,9 +33,7 @@ jobs:
           cargo doc
 
       - if: matrix.toolchain == 'stable' || matrix.toolchain == '1.67.1'
-        run: |
-          cargo fmt -- --check
-          
+        run: |          
           cargo check
           cargo check --examples
           
@@ -48,4 +44,6 @@ jobs:
       # dev dependencies require at least 1.74.0
       - if: matrix.toolchain == 'stable'
         run: |
+          cargo fmt -- --check
+          
           cargo test --no-fail-fast -- --nocapture
