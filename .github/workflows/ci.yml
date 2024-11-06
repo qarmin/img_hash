@@ -48,10 +48,10 @@ jobs:
       # Cannot run tests on 1.67.1, because dev dependencies require at least 1.74.0
       - if: matrix.toolchain == '1.67.1'
         run: |
-          cargo check
-          cargo check --examples
-          
           # Image-rs 0.25.4 is the last version that supports 1.67.1
           cargo update -p image@0.25.0 --precise 0.25.4
+          
+          cargo check
+          cargo check --examples
           
           cargo doc
