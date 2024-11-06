@@ -26,24 +26,29 @@ jobs:
           cargo check --feature "nightly"
           
           cargo check --examples
-          cargo check --examples --all-features
+          cargo check --examples --feature "nightly"
           
           cargo test --feature "nightly" --no-fail-fast -- --nocapture
           
           cargo doc
 
-      - if: matrix.toolchain == 'stable' || matrix.toolchain == '1.67.1'
-        run: |          
+      - if: matrix.toolchain == 'stable'
+        run: |
+          cargo fmt -- --check
+          
           cargo check
           cargo check --examples
           
           cargo clippy
           
+          cargo test --no-fail-fast -- --nocapture
+          
           cargo doc
 
-      # dev dependencies require at least 1.74.0
-      - if: matrix.toolchain == 'stable'
+      # Cannot run tests on 1.67.1, because dev dependencies require at least 1.74.0
+      - if: matrix.toolchain == '1.67.1'
         run: |
-          cargo fmt -- --check
+          cargo check
+          cargo check --examples
           
-          cargo test --no-fail-fast -- --nocapture
+          cargo doc
