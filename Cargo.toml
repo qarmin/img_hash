@@ -15,6 +15,7 @@ readme = "README.md"
 
 [features]
 nightly = []
+fast_resize = ["fast_image_resize"]
 
 [dependencies]
 base64 = "0.22.0"
@@ -22,6 +23,7 @@ image = { version = ">=0.25,<0.26", default-features = false }
 rustdct = "0.7"
 serde = { version = "1.0", features = ["derive"] }
 transpose = "0.2"
+fast_image_resize = { version = "5.0.0", features = ["image"], optional = true }
 
 [dev-dependencies]
 criterion = "0.5"
