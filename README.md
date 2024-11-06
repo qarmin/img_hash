@@ -12,7 +12,8 @@ This crate can operate directly on buffers from the [PistonDevelopers/image][1] 
 
 [1]: https://github.com/PistonDevelopers/image
 
-This is fork of [img_hash](https://github.com/abonander/img_hash) library, but with updated dependencies and some new features.
+This is fork of [img_hash](https://github.com/abonander/img_hash) library, but with updated dependencies and some new
+features.
 
 I am not familiar with this library, so if you have a need/willingness to develop it, I can add you as a co-maintainer.
 
@@ -34,18 +35,24 @@ use image_hasher::{HasherConfig, HashAlg};
 fn main() {
     let image1 = image::open("image1.png").unwrap();
     let image2 = image::open("image2.png").unwrap();
-    
+
     let hasher = HasherConfig::new().to_hasher();
-    
+
     let hash1 = hasher.hash_image(&image1);
     let hash2 = hasher.hash_image(&image2);
-    
+
     println!("Image1 hash: {}", hash1.to_base64());
     println!("Image2 hash: {}", hash2.to_base64());
-    
+
     println!("Hamming Distance: {}", hash1.dist(&hash2));
 }
 ```
+
+Minimal version
+============
+Minimal version of Rust required to build this crate is 1.67.1.  
+To be able to use it, you need to pin some external dependencies to lower versions - look at CI to see which version is
+compatible with this crate.
 
 Benchmarking
 ============
