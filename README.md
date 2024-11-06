@@ -12,7 +12,7 @@ This crate can operate directly on buffers from the [PistonDevelopers/image][1] 
 
 [1]: https://github.com/PistonDevelopers/image
 
-This is fork of [img_hash](https://github.com/abonander/img_hash) library, but with updated dependencies.
+This is fork of [img_hash](https://github.com/abonander/img_hash) library, but with updated dependencies and some new features.
 
 I am not familiar with this library, so if you have a need/willingness to develop it, I can add you as a co-maintainer.
 
@@ -29,22 +29,22 @@ image_hasher = "2.0.0"
 Example program:
 
 ```rust
- use image_hasher::{HasherConfig, HashAlg};
+use image_hasher::{HasherConfig, HashAlg};
 
- fn main() {
-     let image1 = image::open("image1.png").unwrap();
-     let image2 = image::open("image2.png").unwrap();
-     
-     let hasher = HasherConfig::new().to_hasher();
-
-     let hash1 = hasher.hash_image(&image1);
-     let hash2 = hasher.hash_image(&image2);
-     
-     println!("Image1 hash: {}", hash1.to_base64());
-     println!("Image2 hash: {}", hash2.to_base64());
-     
-     println!("Hamming Distance: {}", hash1.dist(&hash2));
- }
+fn main() {
+    let image1 = image::open("image1.png").unwrap();
+    let image2 = image::open("image2.png").unwrap();
+    
+    let hasher = HasherConfig::new().to_hasher();
+    
+    let hash1 = hasher.hash_image(&image1);
+    let hash2 = hasher.hash_image(&image2);
+    
+    println!("Image1 hash: {}", hash1.to_base64());
+    println!("Image2 hash: {}", hash2.to_base64());
+    
+    println!("Hamming Distance: {}", hash1.dist(&hash2));
+}
 ```
 
 Benchmarking

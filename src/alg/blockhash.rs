@@ -9,10 +9,7 @@ use std::ops::AddAssign;
 // Main site: http://blockhash.io
 use image::{GenericImageView, Pixel};
 
-use crate::BitSet;
-use crate::{HashBytes, Image};
-
-use crate::BitOrder;
+use crate::{BitOrder, BitSet, HashBytes, Image};
 
 const FLOAT_EQ_MARGIN: f32 = 0.001;
 

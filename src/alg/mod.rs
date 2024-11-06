@@ -1,9 +1,8 @@
 #![allow(clippy::needless_lifetimes)]
+use self::HashAlg::*;
 use crate::CowImage::*;
 use crate::HashVals::*;
 use crate::{BitSet, HashCtxt, Image};
-
-use self::HashAlg::*;
 
 mod blockhash;
 
