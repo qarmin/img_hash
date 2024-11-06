@@ -444,7 +444,7 @@ fn resize_image(img: &GrayImage, width: u32, height: u32, filter: FilterType) ->
         img.width(),
         img.height(),
         img.to_vec(),
-        PixelType::U8,
+        PixelType::U8, // Luma8 is always U8
     ) else {
         return imageops::resize(img, width, height, filter).to_vec();
     };
@@ -452,7 +452,7 @@ fn resize_image(img: &GrayImage, width: u32, height: u32, filter: FilterType) ->
     let mut dst_image = fast_image_resize::images::Image::new(
         width,
         height,
-        PixelType::U8,
+        PixelType::U8, // Luma8 is always U8
     );
     let mut resizer = Resizer::new();
     let resize_alg = match filter {

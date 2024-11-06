@@ -29,6 +29,7 @@ jobs:
           cargo check --examples --features "nightly"
           
           cargo test --features "nightly" --no-fail-fast -- --nocapture
+          cargo test --features "nightly" --no-fail-fast -- --nocapture
           
           cargo doc
 
@@ -40,8 +41,13 @@ jobs:
           cargo check --examples
           
           cargo clippy
+          cargo clippy --features "fast_resize"
           
           cargo test --no-fail-fast -- --nocapture
+          cargo test --release --no-fail-fast -- --nocapture
+          
+          cargo test --features fast_resize --no-fail-fast -- --nocapture
+          cargo test --features fast_resize --release --no-fail-fast -- --nocapture
           
           cargo doc
 
