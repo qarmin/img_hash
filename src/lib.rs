@@ -33,8 +33,7 @@ pub use alg::{BitOrder, HashAlg};
 use base64::Engine;
 use dct::DctCtxt;
 pub use image::imageops::FilterType;
-use image::GrayImage;
-use image::{imageops};
+use image::{imageops, GrayImage};
 use serde::{Deserialize, Serialize};
 pub(crate) use traits::BitSet;
 pub use traits::{DiffImage, HashBytes, Image};
@@ -228,11 +227,11 @@ impl<B: HashBytes> HasherConfig<B> {
     /// different for this to be optimized specifically for JPEG encoded images.
     ///
     /// Further Reading:
-    /// * http://www.hackerfactor.com/blog/?/archives/432-Looks-Like-It.html
+    /// * <http://www.hackerfactor.com/blog/?/archives/432-Looks-Like-It.html>
     /// Krawetz describes a "pHash" algorithm which is equivalent to Mean + DCT preprocessing here.
     /// However there is nothing to say that DCT preprocessing cannot compose with other hash
     /// algorithms; Gradient + DCT might well perform better in some aspects.
-    /// * https://en.wikipedia.org/wiki/Discrete_cosine_transform
+    /// * <https://en.wikipedia.org/wiki/Discrete_cosine_transform>
     #[must_use]
     pub fn preproc_dct(self) -> Self {
         Self { dct: true, ..self }
@@ -260,8 +259,8 @@ impl<B: HashBytes> HasherConfig<B> {
     /// changes how sharp the edges are^[citation needed].
     ///
     /// Further reading:
-    /// * https://en.wikipedia.org/wiki/Difference_of_Gaussians
-    /// * http://homepages.inf.ed.ac.uk/rbf/HIPR2/log.htm
+    /// * <https://en.wikipedia.org/wiki/Difference_of_Gaussians>
+    /// * <http://homepages.inf.ed.ac.uk/rbf/HIPR2/log.htm>
     /// (Difference of Gaussians is an approximation of a Laplacian of Gaussian filter)
     #[must_use]
     pub fn preproc_diff_gauss_sigmas(self, sigma_a: f32, sigma_b: f32) -> Self {
@@ -376,7 +375,7 @@ enum CowImage<'a, I: Image> {
     Owned(I::Buf),
 }
 
-impl<'a, I: Image> CowImage<'a, I> {
+impl<I: Image> CowImage<'_, I> {
     fn to_grayscale(&self) -> Cow<GrayImage> {
         match *self {
             CowImage::Borrowed(img) => img.to_grayscale(),
@@ -417,7 +416,8 @@ impl HashCtxt {
     /// If DCT preprocessing is configured, produce a vector of floats, otherwise a vector of bytes.
     fn calc_hash_vals(&self, img: &GrayImage, width: u32, height: u32) -> HashVals {
         if let Some(ref dct_ctxt) = self.dct_ctxt {
-            let img_vals = resize_image(img, dct_ctxt.width(), dct_ctxt.height(), self.resize_filter);
+            let img_vals =
+                resize_image(img, dct_ctxt.width(), dct_ctxt.height(), self.resize_filter);
             let input_len = img_vals.len() + dct_ctxt.required_scratch();
 
             let mut vals_with_scratch = Vec::with_capacity(input_len);
@@ -436,7 +436,7 @@ impl HashCtxt {
     }
 }
 
-#[cfg(feature = "fast_resize")]
+#[cfg(feature = "fast_resize_unstable")]
 fn resize_image(img: &GrayImage, width: u32, height: u32, filter: FilterType) -> Vec<u8> {
     use fast_image_resize::{PixelType, ResizeAlg, ResizeOptions, Resizer};
 
@@ -457,7 +457,7 @@ fn resize_image(img: &GrayImage, width: u32, height: u32, filter: FilterType) ->
     let mut resizer = Resizer::new();
     let resize_alg = match filter {
         FilterType::Nearest => ResizeAlg::Nearest,
-        FilterType::Triangle => return imageops::resize(img, width, height, filter).to_vec(),
+        FilterType::Triangle => ResizeAlg::Convolution(fast_image_resize::FilterType::Bilinear),
         FilterType::CatmullRom => ResizeAlg::Convolution(fast_image_resize::FilterType::CatmullRom),
         FilterType::Gaussian => ResizeAlg::Convolution(fast_image_resize::FilterType::Gaussian),
         FilterType::Lanczos3 => ResizeAlg::Convolution(fast_image_resize::FilterType::Lanczos3),
@@ -470,7 +470,7 @@ fn resize_image(img: &GrayImage, width: u32, height: u32, filter: FilterType) ->
 
     dst_image.buffer().to_vec()
 }
-#[cfg(not(feature = "fast_resize"))]
+#[cfg(not(feature = "fast_resize_unstable"))]
 fn resize_image(img: &GrayImage, width: u32, height: u32, filter: FilterType) -> Vec<u8> {
     imageops::resize(img, width, height, filter).to_vec()
 }
@@ -563,7 +563,7 @@ impl<B: HashBytes> ImageHash<B> {
     }
 }
 
-/// Provide Serde a typedef for `image::FilterType`: https://serde.rs/remote-derive.html
+/// Provide Serde a typedef for `image::FilterType`: <https://serde.rs/remote-derive.html>
 /// This is automatically checked, if Serde complains then double-check with the original definition
 #[derive(Serialize, Deserialize)]
 #[serde(remote = "FilterType")]
@@ -576,7 +576,7 @@ enum SerdeFilterType {
 }
 
 fn debug_filter_type(ft: &FilterType) -> &'static str {
-    use FilterType::*;
+    use FilterType::{CatmullRom, Gaussian, Lanczos3, Nearest, Triangle};
 
     match *ft {
         Triangle => "Triangle",
@@ -590,6 +590,9 @@ fn debug_filter_type(ft: &FilterType) -> &'static str {
 #[cfg(test)]
 mod test {
     use std::time::Instant;
+
+    use base64::Engine;
+    use hamming_bitwise_fast::hamming_bitwise_fast;
     use image::imageops::FilterType;
     use image::{ImageBuffer, Rgba};
     use rand::rngs::SmallRng;
@@ -688,7 +691,7 @@ mod test {
         let hash1 = hasher.hash_image(&test_img);
 
         let base64_string = hash1.to_base64();
-        let decoded_result = ImageHash::from_base64(&*base64_string);
+        let decoded_result = ImageHash::from_base64(&base64_string);
 
         assert_eq!(decoded_result.unwrap(), hash1);
     }
@@ -698,7 +701,7 @@ mod test {
         let image_buffer = gen_test_img(256, 256);
 
         let mut expected_hashes: Vec<(FilterType, HashAlg, u32, String, String)> = Vec::new();
-        #[cfg(not(feature = "fast_resize"))]
+        #[cfg(not(feature = "fast_resize_unstable"))]
         let data = &[
             (FilterType::Lanczos3, HashAlg::Blockhash, 8, "3M0FbCH1SXo"),
             (FilterType::Lanczos3, HashAlg::Blockhash, 16, "Rmtwt5NMuVGZAHNooZz9P9IYk8R/t5BcqAnrPgTZ9pY"),
@@ -821,7 +824,7 @@ mod test {
             (FilterType::Gaussian, HashAlg::VertGradient, 32, "WTYbIhlmThIpygzqmMlTSYnpGtEYoRmLnNBZhnAyG8YsZzjSucY0UjKmPUoiJR3TwnEwzYpZMpmu3DaZZW7Gmkwy3BhwWodaYG2qzLEpjUoV20rGBYPKxpmj6ZI8Tpl0z2QZDss4OYbKtjSScGZ2rBLMdqwLznZy6qhpcxyYNGU"),
             (FilterType::Gaussian, HashAlg::VertGradient, 64, "1jYyE8ympg7TLRMnm7qcqhKpJiflEp2LU69oWJ0ZxCvirG320JScpE+NzebSbM62lM+MuJtmUrrGpKKblJnXsY+G4pyeopCxgsjMZcKpi6eiQUZdySE1YmVmAmYTV+JksbMBpyW1vMSb05WVpbGmpqxqCDqLWbcmqTplhoVJJrJgHmUupVVeedMcNjWsakp7U9ksdagfJqtXzWRQJx8lColPPeWSpczYCU8tzGEHRxpaGqUMZ4lZ81poawazyEeTzV0bOaq8s1kNs6JthZtb+ZrGklEdp83Lu2RWmZInicO4WdPVRi6hElbbUXNkTmXJMp5oVidXTuFpssxmrHFp4VlnHY6maWSVmXE9CibJhhEyKW1ZNmvSEVquTGseYsaYay0ybNxa2pArOeIsVkZTcSaV5Y125vSsJY1FM2JSarIzDUfxXGIEu5OjmsnONpiqE2EeZJ5xjKxTSo9lyvaYkqNCrklH+syZ0saOSWbKlZQlT5YrZUERFzHZdFImSzGLufJkNqkZ24wTYzUkjbPKrNZx6SpHRprijFDhyuYGmliN0RztEi6PRKGglGYRa6VmhXKcPpobNkedbFtZOC1CxotkcnQ6HXPMKkvQ5VmaaGpMadjZGRcIrSYZm3k5ViytRs3YTOU0nbVUwZRFRyUHJTTHlVMZV5stJSelQ1HVOs4"),
         ];
-        #[cfg(feature = "fast_resize")]
+        #[cfg(feature = "fast_resize_unstable")]
         let data = &[
             (FilterType::Lanczos3, HashAlg::Blockhash, 8, "3M0FbCH1SXo"),
             (FilterType::Lanczos3, HashAlg::Blockhash, 16, "Rmtwt5NMuVGZAHNooZz9P9IYk8R/t5BcqAnrPgTZ9pY"),
@@ -851,26 +854,26 @@ mod test {
             (FilterType::Triangle, HashAlg::Blockhash, 16, "Rmtwt5NMuVGZAHNooZz9P9IYk8R/t5BcqAnrPgTZ9pY"),
             (FilterType::Triangle, HashAlg::Blockhash, 32, "+JhF7rcRfDgFvjlWJBsrVxfiaTYPDVOQ509GlqOFS7dL0gFG+1tsEIc2YaxOjy2/UU7QWqXdmZaTiZ0GUt37CqRmUrOM8spCTlc2pHfVukj+Dy1JzuedykxTZBgEh/si2OhlgqulS0TKOvRP6twsFxJrVwUVaMD+gh2+J3zecM4"),
             (FilterType::Triangle, HashAlg::Blockhash, 64, "VVTBXKcKnFdaqibDc/X7xH8HZs/3W0SDJE0DI1BZyJ0zz7Xv4kg9sych6keNnokFcJyBuN+Xb4qkCs9lUYwcM7ZOh9SqOCkNj5GseqYmPL0dcOIyBD5Tz9+Fu4pXpoSVemr8PRp1r5dh2F/iaIC8CaeQE5hNAiKbSc8u5RNxPc+Pog2vrMRdczJ51nKRoJ7ajk3OV7IMBAl/9kZoT/UCYnHSFIsBNFKYJ0BeK1va9Fr/uLda0Dx3y+wXxUhpid0lSSZWsnC7fDvtG/g8DpOUwTaA42DDmyzBJ93129GgOsOPRaKodH9+kFlTbYqHgkEJRgFS387Wtphss/biT5/oFbCFZhwJF2tcPOx+mER0KZP2yRlHJfNMLBHiT/6s9G+i5yVdIjpPYk7oeJdmrOVwbjorItHOLWR5d6UTc4DGmpK8rLVB4phTkIen5wS9hWMm1XCxbOHJivCc0bt8Y6WuppjayHqU5tmHqjIXGxIfWlc1CS+wr+21SViRt8DtcQxaNGWcqmFtBuLFesLap2jOwe3qrqQnZCRheagz2YV0On5KgtUONP53YHz0XFUE430ZpATg4tE2IUPZ6lHX3mq/jYxWVZt+fjdADoduNDwboxKwy8Catfj0NhsnBDxK00fvBIX0UZT6WQxN54dK5Mc3baIuR3MkFn7asDvUx+M6nVA"),
-            (FilterType::Triangle, HashAlg::Gradient, 8, "VEJCVpJqLDQ"),
-            (FilterType::Triangle, HashAlg::Gradient, 16, "qjWoVkxWzFgmkhgmOBuoik3OjWsYCtU29IykjmQcIcM"),
-            (FilterType::Triangle, HashAlg::Gradient, 32, "jMwlxolJLQ9MWzkLm+yYM7gpPbM001iRsnBOknCQUlMpWcRTLR1t0zCJOCWhZaSEhC3XmurWlNbMtMXpydmYrdOR3rRnUlZwZVubtatKzV5LxoxMihOFiqExGRum4jqoJK1kyXRWaWMxVNXidmZGnck1NUFRJkolx2JLcpZOVjM"),
-            (FilterType::Triangle, HashAlg::Gradient, 64, "KuFisCVe2jSkzNopmVZaNO3RYySbFXOJi6TBIVpNZpWdIIpRWUnNlSBZx2LhgsuUi+VSa9TWiUJYpWEkRIWSnkmZ6U5blq2lQ1rDirPSEqcmnlW7pBML48S2jaJpMaNRlaULqqxtq0qc2yFtJtWWzVptMEWUcrPIMmeHtpxSjdQySadxppAcMUxJ5ZpUxIay5Cpjix2Uxm1TWeGm45QWqRspo6XIFtKcEKqLlckiOk1GRVMoSZaazRZBVTQp4lDNtplhRTrJJqt2mKsNZ7mW6lntXBZtUSrx0+U4qTFSMzPQsjWKM1su3GK6c01z0mFMybDL0a5tM4yW6pFVoiWsxE5ak8koSTPXm1Iya2apoMl7dGwppVhmvVKSIGusWUUTNGCKQYxBc0Z3vswypWUabcpUpXpjcaRVitGpWkxzTpvGUqrUWmVxmcRSdJbh9XKTysa+JnVNjubYyiqTstGuJEVuJjmbskzlZYiySZpFWxO0ZhHOrOKmTLzMStjkRmJDqwhv1bAmcus6VXJNtSyVeDYVVramNJcpNFsY9kYZmzYlm3ljUiuFVksbZkkyozS9KZIxuVCykeEdtqhabxqBiUfMa2kzG6sFUTMzRpLKqroWNXouSjazqiYVVZZkk1EiMlRZnF09Se2TcDJZ21URH1yjmCi2ew/LGc1qcnSrzcw"),
-            (FilterType::Triangle, HashAlg::Mean, 8, "eQ9N/ff/eus"),
-            (FilterType::Triangle, HashAlg::Mean, 16, "V2fQdN/V+RNcEnMs4f7Rv17eG+f/+7v96InpPsE5Ls4"),
-            (FilterType::Triangle, HashAlg::Mean, 32, "uLlPHDeTfh4bvjl+BIs5J2dzYadvp3Gz58+akOOzBx/a2gjH+ntoAkU/cSwHj609GnrevofdmZeDec/PFvO//+y30OX8k/pDnwIWvBbPmtD/n5lJ9X+e/+9XMP/Nx/+6GPjBgMvuS0bHmfDHzNxMFQL5RweGQMDtng3Y4PydfOI"),
-            (FilterType::Triangle, HashAlg::Mean, 64, "xdfFZ+0I+HdIm5cHu9/4ZR4Hx0R/P2YD9k8HY9BZ/J+yx3RP+hicF08A/G+LH54VFMiB2MUXO043CM/piR0iPJM3h/kCPj0FnjQOO6eWPv7NPb0mBz5fhvt9Os7ZNwbXfk7/dM1hgM8zsH/ybAEUwD/YZcotBKaHRf4e/TFxv9dN8gznrYA9N7nzyTPBAZ7yiV2OPvANCEnsvs8Mxv0fIHRS1ouLPNSZJzB2DQN+cgmNAP9I07xziWkD7WjigNMBSQPu2nD7/L/pAAQ/TmOczzOQ8GRIwy/Dp47z0mFQPuMHBeMfZ/J+8I/AR5vHwsdJF0cHp7/B9rgsFj/yT//p/bCnJ75RU3PeZOx1ikDwL9vk6FlT7fNuMITlS9bo/w8w78cQjjhP4k744Z9HTsXwTTEp/nTu4aFbNwPTsdhnCJK5//+Bx8RDsJ/v/wSHxWcmlZ39furJnu7xn39+JMH855rYfXqSpt/v3zs/swAf/zd5TSeQ3d+9WWORH4Dvf+ZGBhFQvyFtAMDBiuSbpmid0cnq6NSuYRRgT7L/3I92OnBetuPGJv4/9Bb0TQNA7n3wQnDj4/Emg4P7fHGx/DY/AYgRRvt3Mj88jubn/babLiI4aoDYFGD2qB0imChAlvPv5QGyEJP7Gaj+56dA0EMBfLBuU2NgQzja8L/T5/k/n9w"),
-            (FilterType::Triangle, HashAlg::Median, 8, "eQ9N/ff/eus"),
-            (FilterType::Triangle, HashAlg::Median, 16, "V2fQdN/V+RNcEnMs4f7Rv17eG+f/+7v96InpPsE5Ls4"),
-            (FilterType::Triangle, HashAlg::Median, 32, "uLlPHDeTfh4bvjl+BIs5J2dzYadvp3Gz58+akOOzBx/a2gjH+ntoAkU/cSwHj609GnrevofdmZeDec/PFvO//+y30OX8k/pDnwIWvBbPmtD/n5lJ9X+e/+9XMP/Nx/+6GPjBgMvuS0bHmfDHzNxMFQL5RweGQMDtng3Y4PydfOI"),
-            (FilterType::Triangle, HashAlg::Median, 64, "xdfFZ+0I+HdIm5cHu9/4ZR4Hx0R/P2YD9k8HY9BZ/J+yx3RP+hicF08A/G+LH54VFMiB2MUXO043CM/piR0iPJM3h/kCPj0FnjQOO6eWPv7NPb0mBz5fhvt9Os7ZNwbXfk7/dM1hgM8zsH/ybAEUwD/YZcotBKaHRf4e/TFxv9dN8gznrYA9N7nzyTPBAZ7yiV2OPvANCEnsvs8Mxv0fIHRS1ouLPNSZJzB2DQN+cgmNAP9I07xziWkD7WjigNMBSQPu2nD7/L/pAAQ/TmOczzOQ8GRIwy/Dp47z0mFQPuMHBeMfZ/J+8I/AR5vHwsdJF0cHp7/B9rgsFj/yT//p/bCnJ75RU3PeZOx1ikDwL9vk6FlT7fNuMITlS9bo/w8w78cQjjhP4k744Z9HTsXwTTEp/nTu4aFbNwPTsdhnCJK5//+Bx8RDsJ/v/wSHxWcmlZ39furJnu7xn39+JMH855rYfXqSpt/v3zs/swAf/zd5TSeQ3d+9WWORH4Dvf+ZGBhFQvyFtAMDBiuSbpmid0cnq6NSuYRRgT7L/3I92OnBetuPGJv4/9Bb0TQNA7n3wQnDj4/Emg4P7fHGx/DY/AYgRRvt3Mj88jubn/babLiI4aoDYFGD2qB0imChAlvPv5QGyEJP7Gaj+56dA0EMBfLBuU2NgQzja8L/T5/k/n9w"),
+            (FilterType::Triangle, HashAlg::Gradient, 8, "VEJCRpJiLDQ"),
+            (FilterType::Triangle, HashAlg::Gradient, 16, "qjWoVkxWzFgmkhgmOBuoik3PjWsYCtV29IykjmQcIcM"),
+            (FilterType::Triangle, HashAlg::Gradient, 32, "jMwlRolJLQ9MSz0Lm+yYM7gpPbM001iRsnBOknCQUlMtWcRTLR1t0zCJOCWhZaSEjC3XmurWlNbMtMXpydmYrdOR3rVHUlZwZVqbtatKzU5LxoxMihOFiqEhGRum4jqoJK1kyXRWaWMxVNXiNmZGnck1NUFRJkqlx2JLcpZOFjM"),
+            (FilterType::Triangle, HashAlg::Gradient, 64, "KuFisCVe2jSkzMopmVZaNO3RYySbFXOJi6TBIVpNZpWdIIpRWUnNlSBZw2LhgouUi+VWa9TWiUJYpWEkRIWSnkmZ6U5blq2lQ1rDirPSEqcmnlW7pBML48S2jaJpMaNRlaULqqxtq0qc2yFtJtWWzVptMEWUcrPIMmeHtpxSjdRySadzppAcMUxJ5ZpUxIay5Cpjix2Uxm1TWeGC45QWqRspo6XIFtKcEKqLlckiOk1GRVOoSZaazRZBVTQp4lDNtplhRTrJpqt0iKsNZ7mW6lntfBdtUSrx0eU4qTFSMzPQsjWKM1su3GK6c01z0mFMybDL0a5tM4yW6pFVoiWsxE5ak8ksSTPXm1Iya2apoMl7dGwppVhmvVKSIGusWUUTNGCKQYxBc0Z3vswypWUabcpUpXpjcaRNitGpWkxzTpvGUqrUWmVxmcRSdJbh9XKTysa+JnVNrubYyiqTstGuJEVuJhmbskzlZYiySZpFWxO0ZhHOrOKmTLzMStjkRmJDqwgv1bAmcus6VXJNtSyVeDYVVramNJcpNFsY9mYZmzYlm3ljUiuFVksbZkkyozS9KZIxuVCykeEdtqhabxqBiUfMK2kzG6sFUTMzRpLKqroeNXouSjazqiYVVZZk01EiMlRZmF09SayTcDJZ21URP1yzmCi2ew3LGc1qcnSrzcw"),
+            (FilterType::Triangle, HashAlg::Mean, 8, "fQ9N/ff/eus"),
+            (FilterType::Triangle, HashAlg::Mean, 16, "V2fQdN/V+RNcEnMs4f7Rv17eG+b/+7v96InpPsE5Ps4"),
+            (FilterType::Triangle, HashAlg::Mean, 32, "uLlPHDeTfh4bvjl+BIs5J2dzYadrp3Gz58+akOOzBx/a2gjH+ntoAkU/cSwHj609GnrevofdmZeDec/PFvO//+y30OX8k/pDnwIWvBbPmtD/n5lJ9X+e/+9XMP/Nx/+6WPjBgMvuS0bHmfDHzNxMFRL5RweGQMDtng3Y4PydfOI"),
+            (FilterType::Triangle, HashAlg::Mean, 64, "xcfFZ60I+HdIm4dHu9/4ZR4Xx0R/P2YD9k8HY9BZ/J+yx3RP+hicF08A/G+LH54VFMiB2MUXO043CM/piR0iPJMnh/kCPj8FnjQOO6eWPv7NPa0mBz5fhvt9Os7ZNwbXfk7/dM1hgM8zsH/ybAEUwD/YZcotBKaHRf4e/TFxv9dN8gznrYA9N7nzyTPBAZ7yiV2OPvANCEnsvs8Mxv0fIHRSVouLPNSZJzB2DQN+cgmNAP9I07xziXkD7WjigNMBSQPu2nD7/L/pAAQ/TmOczzOQ8GRIwy/Dp47z0mFQPuMHBeMfZ/J+8I/AR5vHwsdJF0cHp7/B9rgsFj/yT//p/bCnJ75RU3PeZOx1ikD0L9vk6FlT7fNuMITlS9bo/w8w78cQjjhP4k744Z9HTkXwTTE5/nTu4aFbNwPTsdhnGJK5//+Bx8RDsJ/v/wSHxWcmlZ39furJnu7xn39+JMH855rYfXqypt/v3zs/kwAf/zd5TSeQ3d+9WWORH4Dvf+ZGBhFQvyFtAMDFiuSbpmid0cnq6NSuYRRgT7L/3I52OnBetuPGJv4/9Bb0TQNA7n3wQnDj4/Emg4P7eHGx/DY/AYgQRvt3Mj88jubn/babLiI4aoDYFGD2qB0imChAlvPu5QGyEJf7Gej+56dA0EMBfLBuU2NgQzja8L/T5/k/n9w"),
+            (FilterType::Triangle, HashAlg::Median, 8, "fQ9N/ff/eus"),
+            (FilterType::Triangle, HashAlg::Median, 16, "V2fQdN/V+RNcEnMs4f7Rv17eG+b/+7v96InpPsE5Ps4"),
+            (FilterType::Triangle, HashAlg::Median, 32, "uLlPHDeTfh4bvjl+BIs5J2dzYadrp3Gz58+akOOzBx/a2gjH+ntoAkU/cSwHj609GnrevofdmZeDec/PFvO//+y30OX8k/pDnwIWvBbPmtD/n5lJ9X+e/+9XMP/Nx/+6WPjBgMvuS0bHmfDHzNxMFRL5RweGQMDtng3Y4PydfOI"),
+            (FilterType::Triangle, HashAlg::Median, 64, "xcfFZ60I+HdIm4dHu9/4ZR4Xx0R/P2YD9k8HY9BZ/J+yx3RP+hicF08A/G+LH54VFMiB2MUXO043CM/piR0iPJMnh/kCPj8FnjQOO6eWPv7NPa0mBz5fhvt9Os7ZNwbXfk7/dM1hgM8zsH/ybAEUwD/YZcotBKaHRf4e/TFxv9dN8gznrYA9N7nzyTPBAZ7yiV2OPvANCEnsvs8Mxv0fIHRSVouLPNSZJzB2DQN+cgmNAP9I07xziXkD7WjigNMBSQPu2nD7/L/pAAQ/TmOczzOQ8GRIwy/Dp47z0mFQPuMHBeMfZ/J+8I/AR5vHwsdJF0cHp7/B9rgsFj/yT//p/bCnJ75RU3PeZOx1ikD0L9vk6FlT7fNuMITlS9bo/w8w78cQjjhP4k744Z9HTkXwTTE5/nTu4aFbNwPTsdhnGJK5//+Bx8RDsJ/v/wSHxWcmlZ39furJnu7xn39+JMH855rYfXqypt/v3zs/kwAf/zd5TSeQ3d+9WWORH4Dvf+ZGBhFQvyFtAMDFiuSbpmid0cnq6NSuYRRgT7L/3I52OnBetuPGJv4/9Bb0TQNA7n3wQnDj4/Emg4P7eHGx/DY/AYgQRvt3Mj88jubn/babLiI4aoDYFGD2qB0imChAlvPu5QGyEJf7Gej+56dA0EMBfLBuU2NgQzja8L/T5/k/n9w"),
             (FilterType::Triangle, HashAlg::DoubleGradient, 8, "EURSBSI"),
-            (FilterType::Triangle, HashAlg::DoubleGradient, 16, "VApCdiqSaiy0lZoLIimMLCSM"),
-            (FilterType::Triangle, HashAlg::DoubleGradient, 32, "qjWoVmxWzFgmmCwmGCuomknKTU+AKlwa1SY0jKSaZJwhw3YTkqOKw861xqSVhliWq1RDCmRpdKKRrfIkazQ0ZqHkasQ"),
-            (FilterType::Triangle, HashAlg::DoubleGradient, 64, "jcwlTolJLw9MSykLm8yYM5opOTM00ViRknFOmPC00pFl2cZTLR0t0zONaSWkwbiliSWWnqIW2ZLIlFXDyJ3FrcuZmrRTkuRwRVhaNWVLybRL6s5MSpaMDKoRxZqhIZgZpuI4qGStZMl1VmhjMUTU4jZmRpHJNSFBUSJaJcdmS3KSTlYzSRVbIhlkThIpygzqmslTaYnpGtk5qRmz3NFVpngyW4dkNxjSLcY0UruGNWoyJz3TqmkMzZpxMpEuSTAZpUymilZi2JhIMpVQcVSiSiAtlcy1UZ5KFZtK5gWjy9KZIqlytEyZdN9kWQrLODnXyLZ0NnBOdqxSjHaoD842YuqoaXOemDQl"),
-            (FilterType::Triangle, HashAlg::VertGradient, 8, "kRsTIQwkJIw"),
-            (FilterType::Triangle, HashAlg::VertGradient, 16, "dhKww4rHxrWWhDWWSRSjFEZKZKGRqZIZayQsZqHk4sQ"),
-            (FilterType::Triangle, HashAlg::VertGradient, 32, "STVbIhlkThIp2gzqmslTSYnpGtEcoVmr3NBdpmAyG8IsZzjSu8Y0UjKmPUomLR3T6nEwzYpJMpmuzSYZZU7Emk4ynBh0WpdaYW0qzLUpnUo120pGBYPKhpmiqdK4Xpl0z2RZLss4OZfKtnQScG52rFLMdKgLzjZq6ipJc56YNCU"),
-            (FilterType::Triangle, HashAlg::VertGradient, 64, "1DYyGcympk7TLBMnm7qcqhKpJi/lEj2LW6lqXJ0Z1K3irGm20JScpE2NzebSbs62lM+MuJtmWrrKpCKrhJnXsY2G8p2aqpCxisrMZdKpg6eqSUJdySE1amVmAmYTV+JksbMBtyW1vMSb0pWVpbGmJqxqCCqLXbcmqTplhgVJprJgmmUupVReadEUNjWkakp7U9kstagWJqtVzXRSpR0lKolPLeUSpczYCU8tTGEnRxpKGq0MZ5lR8VpoawazyEeTTV0bOaqts1kVs6pthZpb9ZpGklU5p83Lu2RWmZImiUG4WdPVRi6pElbaUSNkTmXJspZoVidXTuHpsswmqHBp4VlnHY6maWSVyVE9CibLxhEyK2lJdmvSEViuTGtOQoaKSy2yptxaWpIrGaIsVkdTcS6V5Y125vSsJY1VM2pSarIzDUXxXGoUm5Oi2MnONpiqU2EfZZ5RjKxTaottyvaYkqtCrklH+syZ0saOaCZKlZQlT5YrRVERFTXZdFpmSzGLu/JmNikZ2qxTYzUljaPKrNZxqSpXQpLijFDhyuYGmliN0TztkC6rRKWglGYRa7VmhfKctpobpk+ZbFtZOC1KxstkMnQ6PXOMKkvR5Vma6GpMaVhZGRKIrWYJm3k5ViStVs3YTMU0nbVVwZVFV6WHLTXFlVMZV4stJSel01XVGtI"),
+            (FilterType::Triangle, HashAlg::DoubleGradient, 16, "VApCdiqSaiy0lZoLIimMbCSM"),
+            (FilterType::Triangle, HashAlg::DoubleGradient, 32, "qjWoVmxWzFgmmCwmWCuomknKTU+AKlwa1SY0jKSaZJwhw3YTkuOKw861xqSUhliWq1RDCmRpdKKRrfIkazQ0ZqHk6sQ"),
+            (FilterType::Triangle, HashAlg::DoubleGradient, 64, "jcwlTolJLw9MSykLm8yYM5opOTM00ViRknFOmPC00pFl2cZTLR0t0zONaSWkwbiliSWWnqIW2ZLIlFXDyJ3FrcuRmrRTkuxwRVhaNWVLyaRL6s5MSpaMDKoRxZqhIZgZpuI4qGStZMl1VmhjMUTU4jZmRpHJNSFBUSJaJcdiS3KSTlYzSRVbIhlkThIpygzqmslTaYnpGtk5qRm73NFVpnQyW6dkNxjSrcY0UrOGNWoyJx3TqmkMzZpxMpEuSTAZpUymilZi2JhIMpVQcVSiSjAtl8y1UZ5KFZtK5gWjy9KZIqlytEyZdN9kWQrLODnXyLZ0NnJOdqxSjHaoD842YuqoaXOemDQl"),
+            (FilterType::Triangle, HashAlg::VertGradient, 8, "kJsTIQwkJIw"),
+            (FilterType::Triangle, HashAlg::VertGradient, 16, "dhKww4rHxrWWhDSWSRSjFEZKZKGRqZIZayQsZqHk4sQ"),
+            (FilterType::Triangle, HashAlg::VertGradient, 32, "STVbIhlkThIp2gzqmslTSYnpGtEcoVmr3NBdpmAyG8IsZxjSq8Y0UjKmPUomLR3T6nEwzYpJMpmu3SYZ5U7Emk4ynFh0WpdaYW2qzLUpnUo120pGBYPKhpmiqdK4Xpl0z2RZLss4OZfKtnQTcG52rFKMdKgLzjZq6ipJc56YNGU"),
+            (FilterType::Triangle, HashAlg::VertGradient, 64, "1DYyGcympk7TLRMnm7qcqhKpJi/lEj2LW6lqXJ0Z1C3irGm20JScpE2NzebSbs62lM+MuJtmWrrCpCKrhJHXsYWG8pyaqpCxisrMZcKpg6eqSUJdySE1amVmAmYTV+JksbMBt6W1vMTb0pWVpaGmJqxqCCqLXbcmqTplhgVJprJgmmUupVVeadEUNjXkakp7U9kstagWJqtVzXRSpRUlKolPKeUSrczYCU8tTGEnRxpKGqUMZ5lR8VpoawazyEWTTV0bOaqts1kNs6pthZpb9ZpGklU5p83Lu2RWmZImiUG4WdPVRi6pElbaUSNkTmXJspZoVidXTuHpsswmqHBp4VlnHY6maWSVyVU9CibLxhEyK2lJdmvSEViuTGtOQoaKSy2yptxYWpIrGaIsVkdTcS6V5Y1m5vSsJY1VM2pSarIzDUfxXGoUm5Oi2MnONpiqU2EfZZ5RjKxSaottyvaYkqtCrklH+syZ0saOaCZKlZQlT5YrRVERF3XZdFpmSzGLu/JmNikZ26xTYzUljaPKrNZxqSpXQpLijFDhyuYGmliN0TztkC6rVKWglGYRa7VmhfKctpobpk+ZbFtZOC1KxstkMnQ6PXOMKkvR5Vma6GpMaVhZGRKIrWYJm3k5ViStVs3YTMU0nbVVwZVFV6WHJTXFFVMZV4stJSet01XVGtI"),
             (FilterType::Nearest, HashAlg::Blockhash, 8, "3M0FbCH1SXo"),
             (FilterType::Nearest, HashAlg::Blockhash, 16, "Rmtwt5NMuVGZAHNooZz9P9IYk8R/t5BcqAnrPgTZ9pY"),
             (FilterType::Nearest, HashAlg::Blockhash, 32, "+JhF7rcRfDgFvjlWJBsrVxfiaTYPDVOQ509GlqOFS7dL0gFG+1tsEIc2YaxOjy2/UU7QWqXdmZaTiZ0GUt37CqRmUrOM8spCTlc2pHfVukj+Dy1JzuedykxTZBgEh/si2OhlgqulS0TKOvRP6twsFxJrVwUVaMD+gh2+J3zecM4"),
@@ -945,7 +948,7 @@ mod test {
             (FilterType::Gaussian, HashAlg::VertGradient, 64, "3jYyE8ympg7TLRMn27qcqhKpJiflEp2LU69kWJ0ZxCvirG320JScpE+NzebSbM62lM+MuJtmUrrEpKKbhJnXsY+G4pyeopCxgsjMZcKpi6eiQUZdySE1YmVmAmYTV+JksbMBpyW1vMSb0xWVpbGmpqxqCDqLWbcmqTplhoVJJrJgHmVupVVeedMcNjWsakp7U9ksNagfJqtXzWRQJx8kColPPeUSpczYCU8tzGEFRxpaGq0MZ4lZ81poawazyEeTTV0bOaq8s1kds6JthZtb+ZrGklEZp83Lu2RWmZInicO4WdPVRi6hElbbUXNkTmXJMp5oVidXTuFpssxmrHFp4VlnHY6maWSViXE9CibJhhEyKW1ZNmuSEVquTGseYsbYay0yLNxa2pArOeIsVkZTcSeV5Y125vSsJY1FM2JSarIzDUfxXGIEu5OjmsnONpiqE2EeZJ5xjKxTSo9lyvaYkqNCrklH+syZ0saOSWbKlZQlT5YrZUERFzHZdFJmSzGLufJkNqkZ24wTYzUkjaPKrNZx6ShHRprijFDhyuYGmliN0RztEi6PRKGwlGYRa6VmhXKcPpobNkedbFtZOC1CxotkcnQ6HXPMKkvQ5Vma6GpMadjZGRcIrWYZm3k5ViytRs3YTOU0nTVUwZVFRyWHJTTHlVMZV5stJSelQ1FVOtY"),
         ];
         let start_time = Instant::now();
-        for (filter, alg, size, hash) in data.iter() {
+        for (filter, alg, size, hash) in data {
             let current_hash = HasherConfig::new()
                 .hash_alg(*alg)
                 .hash_size(*size, *size)
@@ -954,7 +957,7 @@ mod test {
                 .hash_image(&image_buffer)
                 .to_base64();
 
-            expected_hashes.push((*filter, *alg, *size, hash.to_string(), current_hash));
+            expected_hashes.push((*filter, *alg, *size, (*hash).to_string(), current_hash));
         }
         println!("Time: {:?}", start_time.elapsed());
 
@@ -972,11 +975,24 @@ mod test {
             let diff_number = diff_hashes.len();
             let mut diff_str = String::new();
             for (filter, alg, size, expected, current) in diff_hashes {
+                let expected_bytes = base64::engine::general_purpose::STANDARD_NO_PAD
+                    .decode(&expected)
+                    .expect("Invalid base64");
+                let current_bytes = base64::engine::general_purpose::STANDARD_NO_PAD
+                    .decode(&current)
+                    .expect("Invalid base64");
+
+                let distance = if expected_bytes.len() != current_bytes.len() {
+                    -9999
+                } else {
+                    hamming_bitwise_fast(&expected_bytes, &current_bytes) as i32
+                };
+
                 diff_str.push_str(&format!(
-                    "{filter:?} {alg:?} {size}x{size}: expected {expected}, got {current}\n"
+                    "{filter:?} {alg:?} {size}x{size} with diff {distance}: expected {expected}, got {current} - \n"
                 ));
             }
-            panic!("{diff_number} hashes did not match:\n{}", diff_str);
+            panic!("{diff_number} hashes did not match:\n{diff_str}");
         }
     }
 }

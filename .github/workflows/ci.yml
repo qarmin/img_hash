@@ -41,13 +41,13 @@ jobs:
           cargo check --examples
           
           cargo clippy
-          cargo clippy --features "fast_resize"
+          cargo clippy --features "fast_resize_unstable"
           
           cargo test --no-fail-fast -- --nocapture
           cargo test --release --no-fail-fast -- --nocapture
           
-          cargo test --features fast_resize --no-fail-fast -- --nocapture
-          cargo test --features fast_resize --release --no-fail-fast -- --nocapture
+          cargo test --features fast_resize_unstable --no-fail-fast -- --nocapture
+          cargo test --features fast_resize_unstable --release --no-fail-fast -- --nocapture
           
           cargo doc
 

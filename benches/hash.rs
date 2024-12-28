@@ -1,9 +1,9 @@
 #[macro_use]
 extern crate criterion;
 
-use criterion::{Bencher, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion};
 use image::{ImageBuffer, Rgba};
-use image_hasher::{HashAlg, HasherConfig, ImageHash};
+use image_hasher::{HashAlg, HasherConfig};
 use rand::rngs::SmallRng;
 use rand::{RngCore, SeedableRng};
 
@@ -16,7 +16,7 @@ fn gen_test_img(width: u32, height: u32) -> RgbaBuf {
         buf.set_len(len);
     } // We immediately fill the buffer.
     let mut rng = SmallRng::seed_from_u64(0xc0ffee);
-    rng.fill_bytes(&mut *buf);
+    rng.fill_bytes(&mut buf);
 
     ImageBuffer::from_raw(width, height, buf).unwrap()
 }
@@ -38,7 +38,7 @@ fn bench_functions(c: &mut Criterion) {
         HashAlg::Blockhash,
     ] {
         group.bench_with_input(
-            BenchmarkId::new("hash", format!("{:?}", alg)),
+            BenchmarkId::new("hash", format!("{alg:?}")),
             &img,
             |b, img| {
                 let hasher = HasherConfig::new()
