@@ -9,6 +9,7 @@ use rand::{RngCore, SeedableRng};
 
 type RgbaBuf = ImageBuffer<Rgba<u8>, Vec<u8>>;
 
+#[allow(clippy::uninit_vec)] // Safe because we immediately fill the buffer.
 fn gen_test_img(width: u32, height: u32) -> RgbaBuf {
     let len = (width * height * 4) as usize;
     let mut buf = Vec::with_capacity(len);

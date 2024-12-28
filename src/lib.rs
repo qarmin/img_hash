@@ -228,9 +228,9 @@ impl<B: HashBytes> HasherConfig<B> {
     ///
     /// Further Reading:
     /// * <http://www.hackerfactor.com/blog/?/archives/432-Looks-Like-It.html>
-    /// Krawetz describes a "pHash" algorithm which is equivalent to Mean + DCT preprocessing here.
-    /// However there is nothing to say that DCT preprocessing cannot compose with other hash
-    /// algorithms; Gradient + DCT might well perform better in some aspects.
+    ///   Krawetz describes a "pHash" algorithm which is equivalent to Mean + DCT preprocessing here.
+    ///   However there is nothing to say that DCT preprocessing cannot compose with other hash
+    ///   algorithms; Gradient + DCT might well perform better in some aspects.
     /// * <https://en.wikipedia.org/wiki/Discrete_cosine_transform>
     #[must_use]
     pub fn preproc_dct(self) -> Self {
@@ -261,7 +261,7 @@ impl<B: HashBytes> HasherConfig<B> {
     /// Further reading:
     /// * <https://en.wikipedia.org/wiki/Difference_of_Gaussians>
     /// * <http://homepages.inf.ed.ac.uk/rbf/HIPR2/log.htm>
-    /// (Difference of Gaussians is an approximation of a Laplacian of Gaussian filter)
+    ///   (Difference of Gaussians is an approximation of a Laplacian of Gaussian filter)
     #[must_use]
     pub fn preproc_diff_gauss_sigmas(self, sigma_a: f32, sigma_b: f32) -> Self {
         Self {
@@ -602,6 +602,7 @@ mod test {
 
     type RgbaBuf = ImageBuffer<Rgba<u8>, Vec<u8>>;
 
+    #[allow(clippy::uninit_vec)] // Safe because we immediately fill the buffer.
     fn gen_test_img(width: u32, height: u32) -> RgbaBuf {
         let len = (width * height * 4) as usize;
         let mut buf = Vec::with_capacity(len);
