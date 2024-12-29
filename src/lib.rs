@@ -464,7 +464,11 @@ fn resize_image(img: &GrayImage, width: u32, height: u32, filter: FilterType) ->
     };
 
     let resize_options = ResizeOptions::new().resize_alg(resize_alg);
-    if let Err(_) = resizer.resize(&src_image, &mut dst_image, Some(&resize_options)) {
+    // TODO - probably here this should be handled better, than simple fallback to imageops::resize
+    if resizer
+        .resize(&src_image, &mut dst_image, Some(&resize_options))
+        .is_err()
+    {
         return imageops::resize(img, width, height, filter).to_vec();
     };
 

@@ -1,4 +1,4 @@
-# 3.0.0 - ?.?.?
+# 3.0.0 - 29.12.2024
 - Minimal Rust version set to 1.70.0(required by newer image-rs, update needed by fast_image_resize)
 - Fix difference of gaussians prefilter - [#21](https://github.com/qarmin/img_hash/pull/21)
 - Fixed u8 overflow in median hash - [#b8b](https://github.com/qarmin/img_hash/commit/b8bfa7c8e5fb48840706eb1d1e101c9af8328328)

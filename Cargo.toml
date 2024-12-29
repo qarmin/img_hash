@@ -1,7 +1,7 @@
 [package]
 
 name = "image_hasher"
-version = "2.0.0"
+version = "3.0.0"
 rust-version = "1.70.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -14,8 +14,10 @@ repository = "http://github.com/qarmin/img_hash"
 readme = "README.md"
 
 [features]
+default = []
+
 nightly = []
-fast_resize_unstable = ["fast_image_resize"] # Unstable feature
+fast_resize_unstable = ["fast_image_resize"] # Unstable feature, that may be removed or changed randomly in future
 
 [dependencies]
 base64 = "0.22.0"

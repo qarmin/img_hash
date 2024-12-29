@@ -15,7 +15,8 @@ This crate can operate directly on buffers from the [PistonDevelopers/image][1] 
 This is fork of [img_hash](https://github.com/abonander/img_hash) library, but with updated dependencies and some new
 features.
 
-I am not familiar with this library, so if you have a need/willingness to develop it, I can add you as a co-maintainer.
+I am not familiar too much with this library, so if you have a need/willingness to develop it, I can add you as a
+co-maintainer.
 
 Usage
 =====
@@ -24,7 +25,7 @@ Usage
 Add `image_hasher` to your `Cargo.toml`:
 
 ```
-image_hasher = "2.0.0"
+image_hasher = "3.0.0"
 ```
 
 Example program:
@@ -51,8 +52,8 @@ fn main() {
 Minimal version
 ============
 Minimal version of Rust required to build this crate is 1.70.0.  
-To be able to use it, you need to pin some external dependencies to lower versions - look at CI to see which version is
-compatible with this crate.
+To be able to use it with such rust compiler, you may need to pin some external dependencies to lower versions - look at
+CI to see which version is compatible with this crate.
 
 Benchmarking
 ============
@@ -63,6 +64,13 @@ nightly installed and want to run benchmarks, use the following command:
 ```
 cargo +nightly bench
 ```
+
+Faster Image Resize
+==========
+Latest version of library, allows to use `fast_image_resize` library under `fast_image_unstable` feature, that should be
+a lot of faster than `image` crate in resizing images.  
+Currently, it is marked as unstable feature, so it may be removed in later versions or change behavior.  
+Also it gives slightly different results than `image` crate.
 
 ## License
 
@@ -75,6 +83,5 @@ at your option.
 
 ### Contribution
 
-Unless you explicitly state otherwise, any contribution intentionally submitted
-for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any
-additional terms or conditions.
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as
+defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
