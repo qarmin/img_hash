@@ -50,7 +50,7 @@ fn main() {
 
 Minimal version
 ============
-Minimal version of Rust required to build this crate is 1.67.1.  
+Minimal version of Rust required to build this crate is 1.70.0.  
 To be able to use it, you need to pin some external dependencies to lower versions - look at CI to see which version is
 compatible with this crate.
 

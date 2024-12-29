@@ -1,8 +1,9 @@
 # 3.0.0 - ?.?.?
+- Minimal Rust version set to 1.70.0(required by newer image-rs, update needed by fast_image_resize)
 - Fix difference of gaussians prefilter - [#21](https://github.com/qarmin/img_hash/pull/21)
 - Fixed u8 overflow in median hash - [#b8b](https://github.com/qarmin/img_hash/commit/b8bfa7c8e5fb48840706eb1d1e101c9af8328328)
 - Added to CI, hash stability check to avoid accidental changes - [#23](https://github.com/qarmin/img_hash/pull/23)
-- Added new unstable feature `fast_image_resize` to speed up image resizing(gives slightly different results than image-rs) - [#24](https://github.com/qarmin/img_hash/pull/24)
+- Added new unstable feature(it may be removed in later versions or change behavior) `fast_image_resize` to speed up image resizing(gives slightly different results than image-rs) - [#24](https://github.com/qarmin/img_hash/pull/24)
 
 # 2.0.0 - 11.03.2024
 - Update to image 0.25
