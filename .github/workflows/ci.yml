@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-latest, windows-latest ]
-        toolchain: [ nightly, stable, 1.67.1 ]
+        toolchain: [ nightly, stable, 1.70.0 ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -29,6 +29,7 @@ jobs:
           cargo check --examples --features "nightly"
           
           cargo test --features "nightly" --no-fail-fast -- --nocapture
+          cargo test --features "nightly" --no-fail-fast -- --nocapture
           
           cargo doc
 
@@ -40,16 +41,20 @@ jobs:
           cargo check --examples
           
           cargo clippy
+          cargo clippy --features "fast_resize_unstable"
           
           cargo test --no-fail-fast -- --nocapture
+          cargo test --release --no-fail-fast -- --nocapture
+          
+          cargo test --features fast_resize_unstable --no-fail-fast -- --nocapture
+          cargo test --features fast_resize_unstable --release --no-fail-fast -- --nocapture
           
           cargo doc
 
-      # Cannot run tests on 1.67.1, because dev dependencies require at least 1.74.0
-      - if: matrix.toolchain == '1.67.1'
+      # Cannot run tests on 1.70.0, because dev dependencies require at least 1.74.0
+      - if: matrix.toolchain == '1.70.0'
         run: |
-          # Image-rs 0.25.4 is the last version that supports 1.67.1
-          cargo update -p image --precise 0.25.4
+          # cargo update -p image --precise 0.25.4 # Image-rs often require newer rust version
           
           cargo check
           cargo check --examples

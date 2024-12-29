@@ -6,7 +6,7 @@
 //! wider SIMD lanes for the conversion.
 //!
 //! The difference is not explained by bounds checking because the lookup doesn't appear to
-//! emit any: https://godbolt.org/z/sutBRr
+//! emit any: <https://godbolt.org/z/sutBRr>
 //! In fact, `.get_unchecked()` seems to make it perform *worse*. Try it.
 
 #[macro_use]
@@ -299,7 +299,7 @@ fn bench_functions(c: &mut Criterion) {
             );
         });
     }
-    group.finish()
+    group.finish();
 }
 
 criterion_group!(benches, bench_functions);
