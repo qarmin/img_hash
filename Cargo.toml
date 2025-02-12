@@ -29,7 +29,7 @@ fast_image_resize = { version = "5.0.0", features = ["image"], optional = true }
 
 [dev-dependencies]
 criterion = "0.5"
-rand = { version = "0.8", features = ["small_rng"] }
+rand = { version = "=0.8", features = ["small_rng"] } # Updating this crate is a breaking change, so do it in next major version
 hamming-bitwise-fast = "1.0.0"
 
 [[bench]]

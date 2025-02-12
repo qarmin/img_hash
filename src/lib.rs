@@ -438,22 +438,12 @@ impl HashCtxt {
 
 #[cfg(feature = "fast_resize_unstable")]
 fn resize_image(img: &GrayImage, width: u32, height: u32, filter: FilterType) -> Vec<u8> {
-    use fast_image_resize::{PixelType, ResizeAlg, ResizeOptions, Resizer};
+    use image::DynamicImage;
+    let src_image: DynamicImage = img.clone().into();
+    let mut dst_image = DynamicImage::ImageLuma8(GrayImage::new(width, height));
 
-    let Ok(src_image) = fast_image_resize::images::Image::from_vec_u8(
-        img.width(),
-        img.height(),
-        img.to_vec(),
-        PixelType::U8, // Luma8 is always U8
-    ) else {
-        return imageops::resize(img, width, height, filter).to_vec();
-    };
+    use fast_image_resize::{ResizeAlg, ResizeOptions, Resizer};
 
-    let mut dst_image = fast_image_resize::images::Image::new(
-        width,
-        height,
-        PixelType::U8, // Luma8 is always U8
-    );
     let mut resizer = Resizer::new();
     let resize_alg = match filter {
         FilterType::Nearest => ResizeAlg::Nearest,
@@ -472,7 +462,7 @@ fn resize_image(img: &GrayImage, width: u32, height: u32, filter: FilterType) ->
         return imageops::resize(img, width, height, filter).to_vec();
     };
 
-    dst_image.buffer().to_vec()
+    dst_image.into_bytes()
 }
 #[cfg(not(feature = "fast_resize_unstable"))]
 fn resize_image(img: &GrayImage, width: u32, height: u32, filter: FilterType) -> Vec<u8> {
@@ -513,7 +503,7 @@ impl<B: HashBytes> ImageHash<B> {
     ///
     /// ## Errors:
     /// Returns a `InvalidBytesError::BytesWrongLength` error if the slice passed can't fit in `B`.
-    pub fn from_bytes(bytes: &[u8]) -> Result<ImageHash<B>, InvalidBytesError> {
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, InvalidBytesError> {
         if bytes.len() * 8 > B::max_bits() {
             return Err(InvalidBytesError::BytesWrongLength {
                 expected: B::max_bits() / 8,
@@ -521,7 +511,7 @@ impl<B: HashBytes> ImageHash<B> {
             });
         }
 
-        Ok(ImageHash {
+        Ok(Self {
             hash: B::from_iter(bytes.iter().copied()),
             __backcompat: (),
         })
@@ -545,7 +535,7 @@ impl<B: HashBytes> ImageHash<B> {
     /// ## Errors:
     /// Returns `InvalidBytesError::Base64(DecodeError::InvalidLength)` if the string wasn't valid base64.
     /// Otherwise returns the same errors as `from_bytes`.
-    pub fn from_base64(encoded_hash: &str) -> Result<ImageHash<B>, InvalidBytesError> {
+    pub fn from_base64(encoded_hash: &str) -> Result<Self, InvalidBytesError> {
         let bytes = base64::engine::general_purpose::STANDARD_NO_PAD
             .decode(encoded_hash)
             .map_err(InvalidBytesError::Base64)?;

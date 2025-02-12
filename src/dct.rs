@@ -19,7 +19,7 @@ impl DctCtxt {
         let width = width as usize * SIZE_MULTIPLIER_U;
         let height = height as usize * SIZE_MULTIPLIER_U;
 
-        DctCtxt {
+        Self {
             row_dct: planner.plan_dct2(width),
             col_dct: planner.plan_dct2(height),
             width,
@@ -130,7 +130,7 @@ fn crop_2d_dct<T: Copy>(mut packed: Vec<T>, rowstride: usize) -> Vec<T> {
 fn test_crop_2d_dct() {
     let packed: Vec<i32> = (0..64).collect();
     assert_eq!(
-        crop_2d_dct(packed.clone(), 8),
+        crop_2d_dct(packed, 8),
         [
             0, 1, 2, 3, // 4, 5, 6, 7
             8, 9, 10, 11, // 12, 13, 14, 15

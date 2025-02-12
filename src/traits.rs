@@ -194,10 +194,10 @@ pub trait DiffImage {
 }
 
 #[cfg(not(feature = "nightly"))]
-impl<P: 'static, C: 'static> Image for ImageBuffer<P, C>
+impl<P, C> Image for ImageBuffer<P, C>
 where
-    P: Pixel<Subpixel = u8>,
-    C: ops::Deref<Target = [u8]>,
+    P: Pixel<Subpixel = u8> + 'static,
+    C: ops::Deref<Target = [u8]> + 'static,
 {
     type Buf = ImageBuffer<P, Vec<u8>>;
 
@@ -219,10 +219,10 @@ where
 }
 
 #[cfg(feature = "nightly")]
-impl<P: 'static, C: 'static> Image for ImageBuffer<P, C>
+impl<P, C> Image for ImageBuffer<P, C>
 where
-    P: Pixel<Subpixel = u8>,
-    C: ops::Deref<Target = [u8]>,
+    P: Pixel<Subpixel = u8> + 'static,
+    C: ops::Deref<Target = [u8]> + 'static,
 {
     type Buf = ImageBuffer<P, Vec<u8>>;
 
@@ -243,9 +243,9 @@ where
     }
 }
 
-impl<P: 'static> DiffImage for ImageBuffer<P, Vec<u8>>
+impl<P> DiffImage for ImageBuffer<P, Vec<u8>>
 where
-    P: Pixel<Subpixel = u8>,
+    P: Pixel<Subpixel = u8> + 'static,
 {
     fn diff_inplace(&mut self, other: &Self) {
         self.iter_mut().zip(other.iter()).for_each(|(l, r)| {
@@ -304,6 +304,6 @@ fn test_bit_order() {
     let bytes_lsb = Vec::from_bools(bools.clone(), BitOrder::LsbFirst);
     assert_eq!(*bytes_lsb, [0b01001001, 0b10010010]);
 
-    let bytes_msb = Vec::from_bools(bools.clone(), BitOrder::MsbFirst);
+    let bytes_msb = Vec::from_bools(bools, BitOrder::MsbFirst);
     assert_eq!(*bytes_msb, [0b10010010, 0b01001001]);
 }

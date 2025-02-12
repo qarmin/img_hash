@@ -1,0 +1,18 @@
+[package]
+name = "test_resize_diff"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+image = { version = "0.25.5", default-features = false, features = ["png", "rayon", "jpeg"] }
+fast_image_resize = { version = "5.1.1", features = ["image"] }
+clap = { version = "4.5.28", features = ["derive"] }
+jwalk = "0.8.1"
+log = "0.4.25"
+handsome_logger = "0.8.0"
+rayon = "1.10.0"
+rand = "0.9.0"
+
+[profile.release]
+lto = true
+
