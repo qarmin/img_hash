@@ -148,7 +148,7 @@ fn test_image_resize(file: &str, output: &str, max_diff: u32, no_alpha: bool) {
 }
 
 fn has_alpha_channel_used(img: &DynamicImage) -> bool {
-    img.pixels().any(|p| p[3] != 255)
+    img.pixels().any(|p| p.2.0[3] != 255)
 }
 
 fn pixel_difference(img1: &DynamicImage, img2: &DynamicImage, algorithm: &str) -> Option<u32> {
