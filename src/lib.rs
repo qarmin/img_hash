@@ -489,6 +489,8 @@ pub enum InvalidBytesError {
         /// Number of bytes found when parsing the hash bytes.
         found: usize,
     },
+    /// Input bytes slice was empty.
+    BytesEmpty,
     /// String passed was not valid base64.
     Base64(base64::DecodeError),
 }
@@ -503,7 +505,12 @@ impl<B: HashBytes> ImageHash<B> {
     ///
     /// ## Errors:
     /// Returns a `InvalidBytesError::BytesWrongLength` error if the slice passed can't fit in `B`.
+    /// Returns `InvalidBytesError::BytesEmpty` if the input slice is empty.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, InvalidBytesError> {
+        if bytes.is_empty() {
+            return Err(InvalidBytesError::BytesEmpty);
+        }
+
         if bytes.len() * 8 > B::max_bits() {
             return Err(InvalidBytesError::BytesWrongLength {
                 expected: B::max_bits() / 8,
@@ -592,7 +599,7 @@ mod test {
     use rand::rngs::SmallRng;
     use rand::{RngCore, SeedableRng};
 
-    use super::{HashAlg, HasherConfig, ImageHash};
+    use super::{HashAlg, HasherConfig, ImageHash, InvalidBytesError};
 
     type RgbaBuf = ImageBuffer<Rgba<u8>, Vec<u8>>;
 
@@ -689,6 +696,14 @@ mod test {
         let decoded_result = ImageHash::from_base64(&base64_string);
 
         assert_eq!(decoded_result.unwrap(), hash1);
+
+        // Test empty string input
+        let empty_result = ImageHash::<Box<[u8]>>::from_base64("");
+        assert_eq!(empty_result, Err(InvalidBytesError::BytesEmpty));
+
+        // Test invalid base64
+        let invalid_result = ImageHash::<Box<[u8]>>::from_base64("??");
+        assert!(matches!(invalid_result, Err(InvalidBytesError::Base64(_))));
     }
 
     #[test]
