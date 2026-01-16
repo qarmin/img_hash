@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::ops;
 
-use image::{imageops, DynamicImage, GenericImageView, GrayImage, ImageBuffer, Pixel};
+use image::{DynamicImage, GenericImageView, GrayImage, ImageBuffer, Pixel, imageops};
 
 use crate::BitOrder;
 
@@ -167,7 +167,7 @@ pub trait Image: GenericImageView + 'static {
     type Buf: Image + DiffImage;
 
     /// Grayscale the image, reducing to 8 bit depth and dropping the alpha channel.
-    fn to_grayscale(&self) -> Cow<GrayImage>;
+    fn to_grayscale(&self) -> Cow<'_, GrayImage>;
 
     /// Blur the image with the given `Gaussian` sigma.
     fn blur(&self, sigma: f32) -> Self::Buf;
@@ -201,7 +201,7 @@ where
 {
     type Buf = ImageBuffer<P, Vec<u8>>;
 
-    fn to_grayscale(&self) -> Cow<GrayImage> {
+    fn to_grayscale(&self) -> Cow<'_, GrayImage> {
         Cow::Owned(imageops::grayscale(self))
     }
 
@@ -257,7 +257,7 @@ where
 impl Image for DynamicImage {
     type Buf = image::RgbaImage;
 
-    fn to_grayscale(&self) -> Cow<GrayImage> {
+    fn to_grayscale(&self) -> Cow<'_, GrayImage> {
         self.as_luma8()
             .map_or_else(|| Cow::Owned(self.to_luma8()), Cow::Borrowed)
     }

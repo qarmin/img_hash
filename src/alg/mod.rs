@@ -106,7 +106,7 @@ fn next_multiple_of_4(x: u32) -> u32 {
 }
 
 impl HashAlg {
-    pub(crate) fn hash_image<I, B>(&self, ctxt: &HashCtxt, image: &I) -> B
+    pub(crate) fn hash_image<I, B>(self, ctxt: &HashCtxt, image: &I) -> B
     where
         I: Image,
         B: BitSet,
@@ -120,7 +120,7 @@ impl HashAlg {
             ..
         } = *ctxt;
 
-        if *self == Blockhash {
+        if self == Blockhash {
             return match post_gauss {
                 Borrowed(img) => blockhash::blockhash(img, width, height, bit_order),
                 Owned(img) => blockhash::blockhash(&img, width, height, bit_order),
@@ -134,7 +134,7 @@ impl HashAlg {
 
         let rowstride = resize_width as usize;
 
-        match (*self, hash_vals) {
+        match (self, hash_vals) {
             (Mean, Floats(ref floats)) => B::from_bools(mean_hash_f32(floats), bit_order),
             (Mean, Bytes(ref bytes)) => B::from_bools(mean_hash_u8(bytes), bit_order),
             (Gradient, Floats(ref floats)) => {
@@ -161,16 +161,16 @@ impl HashAlg {
         }
     }
 
-    pub(crate) fn round_hash_size(&self, width: u32, height: u32) -> (u32, u32) {
-        match *self {
+    pub(crate) fn round_hash_size(self, width: u32, height: u32) -> (u32, u32) {
+        match self {
             DoubleGradient => (next_multiple_of_2(width), next_multiple_of_2(height)),
             Blockhash => (next_multiple_of_4(width), next_multiple_of_4(height)),
             _ => (width, height),
         }
     }
 
-    pub(crate) fn resize_dimensions(&self, width: u32, height: u32) -> (u32, u32) {
-        match *self {
+    pub(crate) fn resize_dimensions(self, width: u32, height: u32) -> (u32, u32) {
+        match self {
             Mean => (width, height),
             Median => (width, height),
             Blockhash => panic!("Blockhash algorithm does not resize"),
@@ -193,10 +193,10 @@ fn mean_hash_f32<'a>(luma: &'a [f32]) -> impl Iterator<Item = bool> + 'a {
 
 fn median_f32(numbers: &[f32]) -> f32 {
     let mut sorted = numbers.to_owned();
-    sorted.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
+    sorted.sort_unstable_by(|a, b| a.partial_cmp(b).expect("Cannot compare NaN values"));
 
     let mid = sorted.len() / 2;
-    if sorted.len() % 2 == 0 {
+    if sorted.len().is_multiple_of(2) {
         let a = sorted[mid - 1];
         let b = sorted[mid];
         (a + b) / 2.0
@@ -207,10 +207,10 @@ fn median_f32(numbers: &[f32]) -> f32 {
 
 fn median_u8(numbers: &[u8]) -> u8 {
     let mut sorted = numbers.to_owned();
-    sorted.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
+    sorted.sort_unstable_by(|a, b| a.partial_cmp(b).expect("Cannot compare NaN values"));
 
     let mid = sorted.len() / 2;
-    if sorted.len() % 2 == 0 {
+    if sorted.len().is_multiple_of(2) {
         let a = sorted[mid - 1];
         let b = sorted[mid];
         ((a as u16 + b as u16) / 2) as u8

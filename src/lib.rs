@@ -33,7 +33,7 @@ pub use alg::{BitOrder, HashAlg};
 use base64::Engine;
 use dct::DctCtxt;
 pub use image::imageops::FilterType;
-use image::{imageops, GrayImage};
+use image::{GrayImage, imageops};
 use serde::{Deserialize, Serialize};
 pub(crate) use traits::BitSet;
 pub use traits::{DiffImage, HashBytes, Image};
@@ -339,7 +339,7 @@ impl<B> fmt::Debug for HasherConfig<B> {
             .field("width", &self.width)
             .field("height", &self.height)
             .field("hash_alg", &self.hash_alg)
-            .field("resize_filter", &debug_filter_type(&self.resize_filter))
+            .field("resize_filter", &debug_filter_type(self.resize_filter))
             .field("gauss_sigmas", &self.gauss_sigmas)
             .field("use_dct", &self.dct)
             .field("bit_order", &self.bit_order)
@@ -376,7 +376,7 @@ enum CowImage<'a, I: Image> {
 }
 
 impl<I: Image> CowImage<'_, I> {
-    fn to_grayscale(&self) -> Cow<GrayImage> {
+    fn to_grayscale(&self) -> Cow<'_, GrayImage> {
         match *self {
             CowImage::Borrowed(img) => img.to_grayscale(),
             CowImage::Owned(ref img) => img.to_grayscale(),
@@ -460,7 +460,7 @@ fn resize_image(img: &GrayImage, width: u32, height: u32, filter: FilterType) ->
         .is_err()
     {
         return imageops::resize(img, width, height, filter).to_vec();
-    };
+    }
 
     dst_image.into_bytes()
 }
@@ -569,10 +569,10 @@ enum SerdeFilterType {
     Lanczos3,
 }
 
-fn debug_filter_type(ft: &FilterType) -> &'static str {
+fn debug_filter_type(ft: FilterType) -> &'static str {
     use FilterType::{CatmullRom, Gaussian, Lanczos3, Nearest, Triangle};
 
-    match *ft {
+    match ft {
         Triangle => "Triangle",
         Nearest => "Nearest",
         CatmullRom => "CatmullRom",
@@ -697,6 +697,7 @@ mod test {
 
         let mut expected_hashes: Vec<(FilterType, HashAlg, u32, String, String)> = Vec::new();
         #[cfg(not(feature = "fast_resize_unstable"))]
+        #[rustfmt::skip]
         let data = &[
             (FilterType::Lanczos3, HashAlg::Blockhash, 8, "3M0FbCH1SXo"),
             (FilterType::Lanczos3, HashAlg::Blockhash, 16, "Rmtwt5NMuVGZAHNooZz9P9IYk8R/t5BcqAnrPgTZ9pY"),
@@ -820,6 +821,7 @@ mod test {
             (FilterType::Gaussian, HashAlg::VertGradient, 64, "1jYyE8ympg7TLRMnm7qcqhKpJiflEp2LU69oWJ0ZxCvirG320JScpE+NzebSbM62lM+MuJtmUrrGpKKblJnXsY+G4pyeopCxgsjMZcKpi6eiQUZdySE1YmVmAmYTV+JksbMBpyW1vMSb05WVpbGmpqxqCDqLWbcmqTplhoVJJrJgHmUupVVeedMcNjWsakp7U9ksdagfJqtXzWRQJx8lColPPeWSpczYCU8tzGEHRxpaGqUMZ4lZ81poawazyEeTzV0bOaq8s1kNs6JthZtb+ZrGklEdp83Lu2RWmZInicO4WdPVRi6hElbbUXNkTmXJMp5oVidXTuFpssxmrHFp4VlnHY6maWSVmXE9CibJhhEyKW1ZNmvSEVquTGseYsaYay0ybNxa2pArOeIsVkZTcSaV5Y125vSsJY1FM2JSarIzDUfxXGIEu5OjmsnONpiqE2EeZJ5xjKxTSo9lyvaYkqNCrklH+syZ0saOSWbKlZQlT5YrZUERFzHZdFImSzGLufJkNqkZ24wTYzUkjbPKrNZx6SpHRprijFDhyuYGmliN0RztEi6PRKGglGYRa6VmhXKcPpobNkedbFtZOC1CxotkcnQ6HXPMKkvQ5VmaaGpMadjZGRcIrSYZm3k5ViytRs3YTOU0nbVUwZRFRyUHJTTHlVMZV5stJSelQ1HVOs4"),
         ];
         #[cfg(feature = "fast_resize_unstable")]
+        #[rustfmt::skip]
         let data = &[
             (FilterType::Lanczos3, HashAlg::Blockhash, 8, "3M0FbCH1SXo"),
             (FilterType::Lanczos3, HashAlg::Blockhash, 16, "Rmtwt5NMuVGZAHNooZz9P9IYk8R/t5BcqAnrPgTZ9pY"),

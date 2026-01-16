@@ -25,7 +25,7 @@ Usage
 Add `image_hasher` to your `Cargo.toml`:
 
 ```
-image_hasher = "3.0.0"
+image_hasher = "3.1.0"
 ```
 
 Example program:
@@ -51,7 +51,7 @@ fn main() {
 
 Minimal version
 ============
-Minimal version of Rust required to build this crate is 1.70.0.  
+Minimal version of Rust required to build this crate is 1.87.0.  
 To be able to use it with such rust compiler, you may need to pin some external dependencies to lower versions - look at
 CI to see which version is compatible with this crate.
 
