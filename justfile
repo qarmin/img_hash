@@ -14,6 +14,12 @@ fix:
     cargo clippy --fix --allow-dirty --allow-staged --features fast_resize_unstable
     cargo +nightly fmt
 
+fixn:
+    cargo +nightly fmt
+    cargo +nightly clippy --fix --allow-dirty --allow-staged
+    cargo +nightly clippy --fix --allow-dirty --allow-staged --features fast_resize_unstable
+    cargo +nightly fmt
+
 test:
     cargo +nightly test
     cargo +nightly test --feature

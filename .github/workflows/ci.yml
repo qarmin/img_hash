@@ -19,7 +19,7 @@ jobs:
         run: rustup default ${{ matrix.toolchain }}
 
       - if: matrix.toolchain == 'nightly'
-        run: |          
+        run: |
           cargo check
           cargo check --features "nightly"
           
