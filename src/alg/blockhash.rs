@@ -34,7 +34,6 @@ pub fn blockhash<I: Image, B: HashBytes>(
 
 macro_rules! gen_hash {
     ($imgty:ty, $valty:ty, $blocks: expr, $width:expr, $block_width:expr, $block_height:expr, $eq_fn:expr, $bit_order:expr) => {{
-        #[allow(deprecated)] // deprecated as of 0.22
         let channel_count = <<$imgty as GenericImageView>::Pixel as Pixel>::CHANNEL_COUNT as u32;
 
         let group_len = ($width * 4) as usize;
@@ -68,7 +67,7 @@ fn block_adder<'a, T: AddAssign + 'a>(
     blocks: &'a mut [T],
     width: u32,
 ) -> impl FnMut(u32, u32, T) + 'a {
-    move |x, y, add| (blocks[(y as usize) * (width as usize) + (x as usize)] += add)
+    move |x, y, add| blocks[(y as usize) * (width as usize) + (x as usize)] += add
 }
 
 fn blockhash_slow<I: Image, B: HashBytes>(

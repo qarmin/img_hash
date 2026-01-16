@@ -1,3 +1,6 @@
+#![allow(clippy::indexing_slicing)]
+#![allow(clippy::unwrap_used)]
+#![allow(clippy::print_stdout)]
 //! Hash an image and print the Base64 value
 
 use std::env;
@@ -15,7 +18,7 @@ fn main() -> Result<(), String> {
         .to_hasher()
         .hash_image(&image);
 
-    #[allow(clippy::format_collect)]
+    #[expect(clippy::format_collect)]
     let hash_str = hash
         .as_bytes()
         .iter()

@@ -3,8 +3,6 @@ name: Build and test
 on:
   push:
   pull_request:
-  schedule:
-    - cron: '0 0 * * 1'
 
 jobs:
   full_ci:
@@ -12,7 +10,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-latest, windows-latest ]
-        toolchain: [ nightly, stable, 1.70.0 ]
+        toolchain: [ nightly, stable, 1.87.0 ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -21,7 +19,7 @@ jobs:
         run: rustup default ${{ matrix.toolchain }}
 
       - if: matrix.toolchain == 'nightly'
-        run: |          
+        run: |
           cargo check
           cargo check --features "nightly"
           
@@ -51,12 +49,17 @@ jobs:
           
           cargo doc
 
-      # Cannot run tests on 1.70.0, because dev dependencies require at least 1.74.0
-      - if: matrix.toolchain == '1.70.0'
+      - if: matrix.toolchain == '1.87.0'
         run: |
           # cargo update -p image --precise 0.25.4 # Image-rs often require newer rust version
           
           cargo check
           cargo check --examples
+          
+          cargo test --no-fail-fast -- --nocapture
+          cargo test --release --no-fail-fast -- --nocapture
+          
+          cargo test --features fast_resize_unstable --no-fail-fast -- --nocapture
+          cargo test --features fast_resize_unstable --release --no-fail-fast -- --nocapture
           
           cargo doc

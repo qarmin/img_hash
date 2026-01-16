@@ -1,3 +1,7 @@
+# 3.1.0 - 16.01.2026
+- Update fast_image_resize(unstable)
+- Minimal Rust version set to 1.87.0
+
 # 3.0.0 - 29.12.2024
 - Minimal Rust version set to 1.70.0(required by newer image-rs, update needed by fast_image_resize)
 - Fix difference of gaussians prefilter - [#21](https://github.com/qarmin/img_hash/pull/21)
