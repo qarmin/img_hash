@@ -10,15 +10,12 @@ init:
 
 fix:
     cargo +nightly fmt
-    cargo clippy --fix --allow-dirty --allow-staged
-    cargo clippy --fix --allow-dirty --allow-staged --features fast_resize_unstable
+    cargo clippy --fix --allow-dirty --allow-staged --all-targets
+    cargo clippy --fix --allow-dirty --allow-staged --all-targets --all-features
     cargo +nightly fmt
 
 fixn:
-    cargo +nightly fmt
-    cargo +nightly clippy --fix --allow-dirty --allow-staged
-    cargo +nightly clippy --fix --allow-dirty --allow-staged --features fast_resize_unstable
-    cargo +nightly fmt
+    RUSTUP_TOOLCHAIN=nightly just fix
 
 test:
     cargo +nightly test

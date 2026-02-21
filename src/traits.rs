@@ -226,7 +226,7 @@ where
 {
     type Buf = ImageBuffer<P, Vec<u8>>;
 
-    default fn to_grayscale(&self) -> Cow<GrayImage> {
+    default fn to_grayscale(&self) -> Cow<'_, GrayImage> {
         Cow::Owned(imageops::grayscale(self))
     }
 
@@ -239,7 +239,7 @@ where
         F: FnMut(u32, u32, &[u8]),
     {
         self.enumerate_pixels()
-            .for_each(|(x, y, px)| foreach(x, y, px.channels()))
+            .for_each(|(x, y, px)| foreach(x, y, px.channels()));
     }
 }
 
@@ -280,7 +280,7 @@ impl Image for GrayImage {
     // type Buf = GrayImage;
 
     // Avoids copying
-    fn to_grayscale(&self) -> Cow<GrayImage> {
+    fn to_grayscale(&self) -> Cow<'_, GrayImage> {
         Cow::Borrowed(self)
     }
 }
