@@ -589,6 +589,7 @@ fn debug_filter_type(ft: FilterType) -> &'static str {
 }
 
 #[cfg(test)]
+#[expect(clippy::print_stdout)]
 mod test {
     use std::time::Instant;
 
@@ -603,13 +604,15 @@ mod test {
 
     type RgbaBuf = ImageBuffer<Rgba<u8>, Vec<u8>>;
 
-    #[allow(clippy::uninit_vec)] // Safe because we immediately fill the buffer.
+    #[expect(clippy::uninit_vec)] // Safe because we immediately fill the buffer.
     fn gen_test_img(width: u32, height: u32) -> RgbaBuf {
         let len = (width * height * 4) as usize;
         let mut buf = Vec::with_capacity(len);
+        // SAFETY:
+        // We immediately fill the buffer.
         unsafe {
             buf.set_len(len);
-        } // We immediately fill the buffer.
+        }
         let mut rng = Xoshiro256PlusPlus::seed_from_u64(0xc0ffee);
         rng.fill_bytes(&mut buf);
 

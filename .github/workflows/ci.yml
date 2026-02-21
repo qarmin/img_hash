@@ -70,11 +70,13 @@ jobs:
       - name: Test i686-unknown-linux-gnu target
         if: matrix.os == 'ubuntu-latest' && matrix.toolchain == 'stable'
         run: |
+          sudo dpkg --add-architecture i386
+          sudo apt update
+          sudo apt install -y gcc-multilib g++-multilib libc6-dev-i386 libc6-dev:i386
+          
           rustup target add i686-unknown-linux-gnu
           cargo test --no-fail-fast --target i686-unknown-linux-gnu -- --nocapture
           cargo test --features fast_resize_unstable --no-fail-fast --target i686-unknown-linux-gnu -- --nocapture
-          
-          
           
           cargo test --features fast_resize_unstable --no-fail-fast --target i686-unknown-linux-gnu
           cargo test --features fast_resize_unstable --no-fail-fast
