@@ -18,7 +18,8 @@ jobs:
       - name: Setup rust version
         run: rustup default ${{ matrix.toolchain }}
 
-      - if: matrix.toolchain == 'nightly'
+      - name: Test with rust nightly
+        if: matrix.toolchain == 'nightly'
         run: |
           cargo check
           cargo check --features "nightly"
@@ -31,7 +32,8 @@ jobs:
           
           cargo doc
 
-      - if: matrix.toolchain == 'stable'
+      - name: Test with rust stable
+        if: matrix.toolchain == 'stable'
         run: |
           cargo fmt -- --check
           
@@ -49,7 +51,8 @@ jobs:
           
           cargo doc
 
-      - if: matrix.toolchain == '1.87.0'
+      - name: Test with rust 1.87.0
+        if: matrix.toolchain == '1.87.0'
         run: |
           # cargo update -p image --precise 0.25.4 # Image-rs often require newer rust version
           
@@ -63,3 +66,17 @@ jobs:
           cargo test --features fast_resize_unstable --release --no-fail-fast -- --nocapture
           
           cargo doc
+
+      - name: Test i686-unknown-linux-gnu target
+        if: matrix.os == 'ubuntu-latest' && matrix.toolchain == 'stable'
+        run: |
+          rustup target add i686-unknown-linux-gnu
+          cargo test --no-fail-fast --target i686-unknown-linux-gnu -- --nocapture
+          cargo test --features fast_resize_unstable --no-fail-fast --target i686-unknown-linux-gnu -- --nocapture
+          
+          
+          
+          cargo test --features fast_resize_unstable --no-fail-fast --target i686-unknown-linux-gnu
+          cargo test --features fast_resize_unstable --no-fail-fast
+          cargo test --no-fail-fast --target i686-unknown-linux-gnu
+          cargo test --no-fail-fast

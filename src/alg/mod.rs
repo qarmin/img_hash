@@ -181,12 +181,12 @@ impl HashAlg {
     }
 }
 
-fn mean_hash_u8<'a>(luma: &'a [u8]) -> impl Iterator<Item = bool> + 'a {
+fn mean_hash_u8(luma: &[u8]) -> impl Iterator<Item = bool> + '_ {
     let mean = (luma.iter().map(|&l| l as u32).sum::<u32>() / luma.len() as u32) as u8;
     luma.iter().map(move |&x| x >= mean)
 }
 
-fn mean_hash_f32<'a>(luma: &'a [f32]) -> impl Iterator<Item = bool> + 'a {
+fn mean_hash_f32(luma: &[f32]) -> impl Iterator<Item = bool> + '_ {
     let mean = luma.iter().sum::<f32>() / luma.len() as f32;
     luma.iter().map(move |&x| x >= mean)
 }
@@ -199,7 +199,7 @@ fn median_f32(numbers: &[f32]) -> f32 {
     if sorted.len().is_multiple_of(2) {
         let a = sorted[mid - 1];
         let b = sorted[mid];
-        (a + b) / 2.0
+        f32::midpoint(a, b)
     } else {
         sorted[mid]
     }
@@ -213,18 +213,18 @@ fn median_u8(numbers: &[u8]) -> u8 {
     if sorted.len().is_multiple_of(2) {
         let a = sorted[mid - 1];
         let b = sorted[mid];
-        ((a as u16 + b as u16) / 2) as u8
+        a.midpoint(b)
     } else {
         sorted[mid]
     }
 }
 
-fn median_hash_u8<'a>(luma: &'a [u8]) -> impl Iterator<Item = bool> + 'a {
+fn median_hash_u8(luma: &[u8]) -> impl Iterator<Item = bool> + '_ {
     let med = median_u8(luma);
     luma.iter().map(move |&x| x >= med)
 }
 
-fn median_hash_f32<'a>(luma: &'a [f32]) -> impl Iterator<Item = bool> + 'a {
+fn median_hash_f32(luma: &[f32]) -> impl Iterator<Item = bool> + '_ {
     let med = median_f32(luma);
     luma.iter().map(move |&x| x >= med)
 }
@@ -242,25 +242,22 @@ where
         .map(|(this, last)| last < this)
 }
 
-fn gradient_hash<'a, T: PartialOrd>(
-    luma: &'a [T],
-    rowstride: usize,
-) -> impl Iterator<Item = bool> + 'a {
+fn gradient_hash<T: PartialOrd>(luma: &[T], rowstride: usize) -> impl Iterator<Item = bool> + '_ {
     luma.chunks(rowstride).flat_map(gradient_hash_impl)
 }
 
-fn vert_gradient_hash<'a, T: PartialOrd>(
-    luma: &'a [T],
+fn vert_gradient_hash<T: PartialOrd>(
+    luma: &[T],
     rowstride: usize,
-) -> impl Iterator<Item = bool> + 'a {
+) -> impl Iterator<Item = bool> + '_ {
     (0..rowstride)
         .map(move |col_start| luma[col_start..].iter().step_by(rowstride))
         .flat_map(gradient_hash_impl)
 }
 
-fn double_gradient_hash<'a, T: PartialOrd>(
-    luma: &'a [T],
+fn double_gradient_hash<T: PartialOrd>(
+    luma: &[T],
     rowstride: usize,
-) -> impl Iterator<Item = bool> + 'a {
+) -> impl Iterator<Item = bool> + '_ {
     gradient_hash(luma, rowstride).chain(vert_gradient_hash(luma, rowstride))
 }

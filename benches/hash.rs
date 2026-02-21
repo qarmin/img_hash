@@ -5,7 +5,7 @@ use criterion::{BenchmarkId, Criterion};
 use image::{ImageBuffer, Rgba};
 use image_hasher::{HashAlg, HasherConfig};
 use rand::rngs::SmallRng;
-use rand::{RngCore, SeedableRng};
+use rand::{Rng, SeedableRng};
 
 type RgbaBuf = ImageBuffer<Rgba<u8>, Vec<u8>>;
 

@@ -29,7 +29,7 @@ fast_image_resize = { version = "6.0.0", features = ["image"], optional = true }
 
 [dev-dependencies]
 criterion = "0.8"
-rand = { version = "=0.8", features = ["small_rng"] } # Updating this crate is a breaking change, so do it in next major version
+rand = { version = "0.10", features = [] } # Updating this crate is a breaking change, so do it in next major version
 hamming-bitwise-fast = "1.0.0"
 
 [[bench]]
@@ -60,6 +60,11 @@ clippy.unnecessary_semicolon = "warn"
 clippy.trivially_copy_pass_by_ref = "warn"
 clippy.non_std_lazy_statics = "warn"
 clippy.undocumented_unsafe_blocks = "warn"
+clippy.manual_midpoint = "warn"
+clippy.ignore_without_reason = "warn"
+clippy.elidable_lifetime_names = "warn"
+clippy.duration_suboptimal_units = "warn"
+clippy.decimal_bitwise_operands = "warn"
 
 clippy.allow_attributes = "warn"
 clippy.assertions_on_result_states = "warn"
