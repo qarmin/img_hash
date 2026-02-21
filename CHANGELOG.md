@@ -1,3 +1,7 @@
+# 3.1.1 - 21.02.2026
+- Changed the image generation algorithm to a stable one to avoid accidental changes in hash values caused by rand version updates or switching between 32-bit and 64-bit crate builds
+- Added 32-bit Linux builds to CI testing
+
 # 3.1.0 - 16.01.2026
 - Update fast_image_resize(unstable)
 - Minimal Rust version set to 1.87.0
