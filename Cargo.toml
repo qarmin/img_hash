@@ -19,6 +19,12 @@ default = []
 nightly = []
 fast_resize_unstable = ["fast_image_resize"] # Unstable feature, that may be removed or changed randomly in future
 
+cli-install-formats = [
+  "image/avif", "image/bmp", "image/dds", "image/exr", "image/ff",
+  "image/gif", "image/hdr", "image/ico", "image/jpeg", "image/png",
+  "image/pnm", "image/qoi", "image/tga", "image/tiff", "image/webp"
+]
+
 [dependencies]
 base64 = "0.22.0"
 image = { version = ">=0.25,<0.26", default-features = false }
