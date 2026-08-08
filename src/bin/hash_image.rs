@@ -8,8 +8,13 @@ use std::env;
 use image_hasher::HasherConfig;
 
 fn main() -> Result<(), String> {
-    let args = env::args().collect::<Vec<_>>();
-    assert_eq!(args.len(), 2);
+    let mut args = env::args().collect::<Vec<_>>();
+    assert!(args.len() >= 2);
+
+    let hash_only = args.contains(&"--hash-only".to_string());
+    if hash_only {
+        args.retain(|x| x != "--hash-only");
+    }
 
     let image = image::open(&args[1]).map_err(|e| format!("failed to open {}: {}", &args[1], e))?;
 
@@ -25,7 +30,11 @@ fn main() -> Result<(), String> {
         .map(|b| format!("{b:02x}"))
         .collect::<String>();
 
-    println!("{}: {}", &args[1], hash_str);
+    if hash_only {
+        println!("{}", hash_str);
+    } else {
+        println!("{}: {}", &args[1], hash_str);
+    }
 
     Ok(())
 }
